@@ -1,0 +1,52 @@
+[GENERAL]
+global_dir = ~/.moove
+
+[GUI]
+upper_spec_plot = 12500
+lower_spec_plot = 500
+vmin_range_slider = -140
+vmax_range_slider = -10
+spec_nperseg = 1024
+spec_noverlap = 896
+spec_nfft = 1024
+
+[TAF]
+bird_name = ye00pu07
+experiment_name = baseline
+
+# rec settings
+frame_rate = 44100
+chunk_size = 64
+t_before = 2
+t_after = 1
+min_bout_duration = 6
+memory_cleanup_interval = 60
+
+[ye00pu07]
+# trained_models
+bout_threshold_db = -30
+window_size = 10
+bandpass_lowcut = 500
+bandpass_highcut = 15000
+bandpass_order = 2
+
+# bout detection (threshold parameters)
+realtime_classification = False
+segmentation_model_name = bird_x_example_seg_model.pth
+classification_model_name = bird_x_example_class_model.pth
+
+# white noise
+targeted_sequence = [he]a$
+catch_trial_probability = 0.1
+white_noise_duration = 0.08
+playback_dir = ~/.moove/playbacks/ye00pu07/
+trigger_time_offset = 0.005
+
+# sliding interval algorithm for segmentation network
+decision_threshold = 0.5
+onset_window_size = 5
+n_onset_true = 3
+offset_window_size = 5
+n_offset_false = 4
+min_syllable_length = 0.03
+min_silent_duration = 0.005

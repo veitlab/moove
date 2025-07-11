@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "moove"
+version = "0.1.23"
+description = ""
+authors = ["Nils Riekers", "Franziska Heubach", "Jacqueline Goebl"]
+readme = "README.md"
+# Include all relevant data und folders
+include = [
+    "moove/templates/**/*",
+    "moove/example_data/**/*.wav",
+    "moove/example_data/**/*.mat",
+    "moove/example_data/**/*.rec",
+    "moove/example_data/**/batch_keep.txt",
+]
+
+packages = [
+    { include = "moove" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+matplotlib = "^3.9.0"
+torch = ">=2.0.0,<=2.5.0"
+evfuncs = "^0.3.5.post1"
+numpy = "^1.26.4"
+sounddevice = "^0.5.0"
+rangeslider = "^2023.7.2"
+pyaudio = "^0.2.14"
+jinja2 = "^3.1.4"
+pandas = "^2.2.2"
+scikit-learn = "^1.5.1"
+seaborn = "^0.13.2"
+umap-learn = "^0.5.6"
+dash = "^2.17.1"
+ttkbootstrap = "^1.10.1"
+ttkwidgets = "^0.13.0"
+pillow = "^10.0.0"
+
+[tool.poetry.group.dev.dependencies]
+adjusttext = "^1.2.0"
+prefixspan = "^0.5.2"
+statsmodels = "^0.14.3"
+tensorflow = "^2.17.0"
+keras = "^3.6.0"
+visualkeras = "^0.1.3"
+
+[tool.poetry.scripts]
+moovegui = "moove.moovegui:main"
+moovetaf = "moove.moovetaf:main"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
