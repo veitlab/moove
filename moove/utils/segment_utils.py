@@ -354,7 +354,7 @@ def start_segment_files_thread(app_state, segmentation_model_name, selection, ch
     threading.Thread(target=segment_files_ml, args=(app_state, progressbar, files, model, metadata, device)).start()
 
 
-def start_create_segmentation_training_dataset(app_state, dataset_name, use_selected_files, selection, bird_combobox, experiment_combobox, day_combobox, root):
+def start_create_segmentation_training_dataset(app_state, dataset_name, use_selected_files, selection, batch_file, bird_combobox, experiment_combobox, day_combobox, root):
     """Start a threaded process to create a segmentation training dataset."""
     from moove.utils import get_files_for_day, get_files_for_experiment, get_files_for_bird, filter_segmented_files
 
@@ -365,11 +365,11 @@ def start_create_segmentation_training_dataset(app_state, dataset_name, use_sele
     files = []
 
     if selection == "current_day":
-        files = get_files_for_day(app_state, bird, experiment, day)
+        files = get_files_for_day(app_state, bird, experiment, day, batch_file)
     elif selection == "current_experiment":
-        files = get_files_for_experiment(app_state, bird, experiment)
+        files = get_files_for_experiment(app_state, bird, experiment, batch_file)
     elif selection == "current_bird":
-        files = get_files_for_bird(app_state, bird)
+        files = get_files_for_bird(app_state, bird, batch_file)
 
     if use_selected_files:
         files = filter_segmented_files(files)

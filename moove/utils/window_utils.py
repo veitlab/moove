@@ -238,17 +238,31 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     tk.Label(left_frame, text="Segmentation Network", font=("Arial", 16)).grid(row=row, column=0, columnspan=2, pady=10, sticky="nsew")
     row += 1
 
+    def update_batch_combobox_segment():
+        app_state.update_batch_select_combobox_segment(select_path=selection_var_segmentation.get())
+
     use_selected_files_var = tk.BooleanVar()
     tk.Checkbutton(left_frame, text="Use segmented files only", variable=use_selected_files_var).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
-    selection_var = tk.StringVar(value="current_day")
-    tk.Radiobutton(left_frame, text="Current Day", variable=selection_var, value="current_day").grid(row=row, column=0, columnspan=2, sticky="w")
+    selection_var_segmentation = tk.StringVar(value="current_day")
+    tk.Radiobutton(left_frame, text="Current Day", variable=selection_var_segmentation, value="current_day",
+                   command=update_batch_combobox_segment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(left_frame, text="Current Experiment", variable=selection_var, value="current_experiment").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(left_frame, text="Current Experiment", variable=selection_var_segmentation, value="current_experiment",
+                   command=update_batch_combobox_segment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(left_frame, text="Current Bird", variable=selection_var, value="current_bird").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(left_frame, text="Current Bird", variable=selection_var_segmentation, value="current_bird",
+                   command=update_batch_combobox_segment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
+
+    batch_file_var = tk.StringVar()
+    training_batch_combobox_segmentation = ttk.Combobox(left_frame,textvariable=batch_file_var)
+    batch_file_var.set("All Files")
+    training_batch_combobox_segmentation.set("All Files")
+    app_state.training_window.training_batch_combobox_segmentation = training_batch_combobox_segmentation
+    app_state.update_batch_select_combobox_segment(select_path = selection_var_segmentation.get())
+    training_batch_combobox_segmentation.grid(row=2, column=1, sticky="ew")
 
     tk.Label(left_frame, text="Training Dataset Name: ").grid(row=row, column=0, sticky="w")
     dataset_name_entry = tk.Entry(left_frame)
@@ -272,7 +286,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     tk.Button(
         left_frame, text="Create Training Dataset",
         command=lambda: start_create_segmentation_training_dataset(
-            app_state, dataset_name_entry.get(), use_selected_files_var.get(), selection_var.get(), bird_combobox, experiment_combobox, day_combobox, root
+            app_state, dataset_name_entry.get(), use_selected_files_var.get(), selection_var_segmentation.get(), batch_file_var.get(), bird_combobox, experiment_combobox, day_combobox, root
         )
     ).grid(row=row, column=0, columnspan=2, sticky="ew")
     row += 1
@@ -324,7 +338,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
 
     use_selected_files_var_classification = tk.BooleanVar()
 
-    def update_batch_combobox():
+    def update_batch_combobox_class():
         app_state.update_batch_select_combobox(select_path=selection_var_classification.get())
 
     tk.Checkbutton(right_frame, text="Use classified files only", variable=use_selected_files_var_classification).grid(row=row, column=0, columnspan=2, sticky="w")
@@ -332,13 +346,13 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
 
     selection_var_classification = tk.StringVar(value="current_day")
     tk.Radiobutton(right_frame, text="Current Day", variable=selection_var_classification, value="current_day", 
-                   command=update_batch_combobox).grid(row=row, column=0, columnspan=2, sticky="w")
+                   command=update_batch_combobox_class).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
     tk.Radiobutton(right_frame, text="Current Experiment", variable=selection_var_classification, value="current_experiment",
-                   command=update_batch_combobox).grid(row=row, column=0, columnspan=2, sticky="w")
+                   command=update_batch_combobox_class).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
     tk.Radiobutton(right_frame, text="Current Bird", variable=selection_var_classification, value="current_bird",
-                   command=update_batch_combobox).grid(row=row, column=0, columnspan=2, sticky="w")
+                   command=update_batch_combobox_class).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
     batch_file_var = tk.StringVar()

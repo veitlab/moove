@@ -279,7 +279,25 @@ class AppState:
             batch_files = [f for f in os.listdir(experiments) if re.match('.*batch.*', f)]
         if select_path == "current_bird":
             batch_files = [f for f in os.listdir(birds) if re.match('.*batch.*', f)]
-        batch_files = ["All files"] + batch_files
+        batch_files = ["All Files"] + batch_files
         self.training_window.training_batch_combobox_classification['values'] = batch_files
-        self.training_window.training_batch_combobox_classification.set("All files")
+        self.training_window.training_batch_combobox_classification.set("All Files")
+
+    def update_batch_select_combobox_segment(self, select_path = "current_day"):
+        birds = os.path.abspath(os.path.join(self.data_dir, "..", ".."))
+        experiments = os.path.join(self.data_dir, "..")
+        day = self.data_dir
+        batch_files = [] 
+        if select_path == "current_day":
+            batch_files = [f for f in os.listdir(day) if re.match('.*batch.*', f)]
+        if select_path == "current_experiment":
+            batch_files = [f for f in os.listdir(experiments) if re.match('.*batch.*', f)]
+        if select_path == "current_bird":
+            batch_files = [f for f in os.listdir(birds) if re.match('.*batch.*', f)]
+        batch_files = ["All Files"] + batch_files
+        self.training_window.training_batch_combobox_segmentation['values'] = batch_files
+        self.training_window.training_batch_combobox_segmentation.set("All Files")
+        print("Batch files list:", batch_files)
+        print("Combo value (get):", self.training_window.training_batch_combobox_segmentation.get())
+        print("Combo current variable:", self.training_window.training_batch_combobox_segmentation['textvariable'])
 
