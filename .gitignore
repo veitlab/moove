@@ -1,0 +1,12 @@
+*.json
+*.pyc
+dist/
+dev_data/
+trained_models/
+training_data/
+cluster_data/
+metadata/
+__pycache__/
+venv/
+.venv/
+.idea/
