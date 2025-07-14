@@ -297,7 +297,3 @@ class AppState:
         batch_files = ["All Files"] + batch_files
         self.training_window.training_batch_combobox_segmentation['values'] = batch_files
         self.training_window.training_batch_combobox_segmentation.set("All Files")
-        print("Batch files list:", batch_files)
-        print("Combo value (get):", self.training_window.training_batch_combobox_segmentation.get())
-        print("Combo current variable:", self.training_window.training_batch_combobox_segmentation['textvariable'])
-
