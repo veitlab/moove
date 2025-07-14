@@ -190,7 +190,7 @@ def update_plots(display_dict, app_state, filepath):
     fig.patch.set_facecolor(app_state.bg_color) # added
 
     fig.align_ylabels() # added
-    #app_state.draw_canvas() # seems unnecessary
+    app_state.draw_canvas()
 
 
 def update_ax2_ax3(ax2, ax3, display_dict, app_state):
