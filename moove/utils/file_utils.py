@@ -141,7 +141,7 @@ def save_seg_class_recfile(filepath, segmented, classified):
 def get_files_for_day(app_state, bird, experiment, day, batch_file="batch"):
     """Return files for a specific day (and batch) within the experiment and bird directory."""
     day_path = os.path.join(app_state.config['rec_data'], bird, experiment, day)
-    if batch_file == "All files":
+    if batch_file == "All Files":
         files = [f for f in os.listdir(day_path)
                  if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
     else:

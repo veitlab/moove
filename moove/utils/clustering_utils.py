@@ -6,6 +6,8 @@ import pandas as pd
 import threading
 import tkinter as tk
 import warnings
+import evfuncs
+import tkinter.font as tkFont
 from matplotlib import cm
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
@@ -13,14 +15,13 @@ from scipy import interpolate
 from scipy.signal import spectrogram
 from sklearn.cluster import KMeans
 from tkinter import ttk, messagebox
-import tkinter.font as tkFont
 from umap import UMAP
 
 # Disable system warnings
 warnings.filterwarnings('ignore')
 
 
-def start_create_cluster_dataset_thread(app_state, dataset_name, use_selected_files, selection, bird_combobox, experiment_combobox, day_combobox):
+def start_create_cluster_dataset_thread(app_state, dataset_name, use_selected_files, selection, batch_file, bird_combobox, experiment_combobox, day_combobox, root):
     """Start a thread to create a cluster dataset based on selected files and criteria."""
     from moove.utils import get_files_for_day, get_files_for_experiment, get_files_for_bird, filter_segmented_files
     bird = bird_combobox.get()
@@ -28,17 +29,17 @@ def start_create_cluster_dataset_thread(app_state, dataset_name, use_selected_fi
     day = day_combobox.get()
 
     if selection == "current_day":
-        files = get_files_for_day(app_state, bird, experiment, day)
+        files = get_files_for_day(app_state, bird, experiment, day, batch_file)
     elif selection == "current_experiment":
-        files = get_files_for_experiment(app_state, bird, experiment)
+        files = get_files_for_experiment(app_state, bird, experiment, batch_file)
     elif selection == "current_bird":
-        files = get_files_for_bird(app_state, bird)
+        files = get_files_for_bird(app_state, bird, batch_file)
 
     if use_selected_files:
         files = filter_segmented_files(files)
 
     app_state.logger.debug(
-        "Creating training dataset with parameters: Use selected files: %s, Selection: %s", use_selected_files, selection
+        "Creating training dataset with parameters: Use selected files: %s, Selection: %s, Batch file: %s", use_selected_files, selection, batch_file
     )
 
     # check if dataset name is valid
@@ -49,15 +50,51 @@ def start_create_cluster_dataset_thread(app_state, dataset_name, use_selected_fi
         max_value = len(files)
         progressbar = ttk.Progressbar(app_state.cluster_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
         progressbar.grid(row=999, column=0, columnspan=2, pady=(10, 0), sticky=tk.W + tk.E)
-        threading.Thread(target=create_cluster_dataset, args=(app_state, dataset_name, progressbar, max_value, files)).start()
+        threading.Thread(target=create_cluster_dataset, args=(app_state, dataset_name, progressbar, max_value, files, root)).start()
 
 
-def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_files):
+def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_files, root):
     """Generate and save a cluster dataset, tracking progress with a progress bar."""
     from moove.utils import get_display_data, seconds_to_index, decibel, plot_data
     if dataset_name:
         going_prod_df = pd.DataFrame(columns=['file', 'onset_no', 'cluster_flattend_spectrogram', 'label'])
         entry_no = 0
+
+    progressbar.grid_remove()
+
+    # Add running label to the GUI
+    font_style = tkFont.Font(family="Arial", size=14)
+    running_label = tk.Label(app_state.cluster_window, text="Looking for segments...", fg="green", font=font_style)
+    running_label.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky=tk.W)
+    root.update_idletasks() 
+
+    def get_onset_offset_info(file_path):
+        notmat_file = file_path + ".not.mat"
+        if os.path.exists(notmat_file):
+            notmat_dict = evfuncs.load_notmat(notmat_file)
+            return {
+                "onsets": notmat_dict.get("onsets", []),
+                "offsets": notmat_dict.get("offsets", [])
+            }
+        else:
+            return {"onsets": [], "offsets": []}
+        
+    num_segs = 0
+    for file_path in all_files:
+        info = get_onset_offset_info(file_path)
+        if len(info["onsets"]) > 0 and len(info["offsets"]) > 0:
+            segs = min(len(info["onsets"]), len(info["offsets"]))
+            num_segs += segs
+
+    if num_segs < 10:
+        running_label.destroy()
+        root.update_idletasks() 
+        messagebox.showinfo("Error", "Not enough segments given. Need at least 10 segments to form clusters.")
+        return
+    
+    running_label.destroy()
+    root.update_idletasks() 
+    progressbar.grid()
 
     for i in range(max_value):
         progressbar['value'] = i

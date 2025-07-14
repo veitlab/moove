@@ -258,8 +258,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
 
     batch_file_var = tk.StringVar()
     training_batch_combobox_segmentation = ttk.Combobox(left_frame,textvariable=batch_file_var)
-    batch_file_var.set("All Files")
-    training_batch_combobox_segmentation.set("All Files")
+    training_batch_combobox_segmentation.set("Select Batch File")
     app_state.training_window.training_batch_combobox_segmentation = training_batch_combobox_segmentation
     app_state.update_batch_select_combobox_segment(select_path = selection_var_segmentation.get())
     training_batch_combobox_segmentation.grid(row=2, column=1, sticky="ew")
@@ -336,11 +335,10 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     tk.Label(right_frame, text="Classification Network", font=("Arial", 16)).grid(row=row, column=0, columnspan=2, pady=10, sticky="nsew")
     row += 1
 
-    use_selected_files_var_classification = tk.BooleanVar()
-
     def update_batch_combobox_class():
-        app_state.update_batch_select_combobox(select_path=selection_var_classification.get())
+        app_state.update_batch_select_combobox_class(select_path=selection_var_classification.get())
 
+    use_selected_files_var_classification = tk.BooleanVar()
     tk.Checkbutton(right_frame, text="Use classified files only", variable=use_selected_files_var_classification).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
@@ -359,7 +357,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     training_batch_combobox_classification = ttk.Combobox(right_frame,textvariable=batch_file_var)
     training_batch_combobox_classification.set("Select Batch File")
     app_state.training_window.training_batch_combobox_classification = training_batch_combobox_classification
-    app_state.update_batch_select_combobox(select_path = selection_var_classification.get())
+    app_state.update_batch_select_combobox_class(select_path = selection_var_classification.get())
     training_batch_combobox_classification.grid(row=2, column=1, sticky="ew")
 
     tk.Label(right_frame, text="Training Dataset Name:").grid(row=row, column=0, sticky="w")
@@ -456,6 +454,9 @@ def open_cluster_window(root, app_state, bird_combobox, experiment_combobox, day
     tk.Label(container_frame, text="Cluster Operations", font=("Arial", 16)).grid(row=row_num, column=0, columnspan=2, pady=10, sticky="ew")
     row_num += 1
 
+    def update_batch_combobox_cluster():
+        app_state.update_batch_select_combobox_cluster(select_path=selection_var.get())
+
     # CheckBox for "Use selected files only"
     use_selected_files_var = tk.BooleanVar()
     tk.Checkbutton(container_frame, text="Use segmented files only", variable=use_selected_files_var).grid(row=row_num, column=0, sticky="w")
@@ -463,12 +464,22 @@ def open_cluster_window(root, app_state, bird_combobox, experiment_combobox, day
 
     # Radio buttons for selection
     selection_var = tk.StringVar(value="current_day")
-    tk.Radiobutton(container_frame, text="Current Day", variable=selection_var, value="current_day").grid(row=row_num, column=0, sticky="w")
+    tk.Radiobutton(container_frame, text="Current Day", variable=selection_var, value="current_day",
+                   command=update_batch_combobox_cluster).grid(row=row_num, column=0, sticky="w")
     row_num += 1
-    tk.Radiobutton(container_frame, text="Current Experiment", variable=selection_var, value="current_experiment").grid(row=row_num, column=0, sticky="w")
+    tk.Radiobutton(container_frame, text="Current Experiment", variable=selection_var, value="current_experiment",
+                   command=update_batch_combobox_cluster).grid(row=row_num, column=0, sticky="w")
     row_num += 1
-    tk.Radiobutton(container_frame, text="Current Bird", variable=selection_var, value="current_bird").grid(row=row_num, column=0, sticky="w")
+    tk.Radiobutton(container_frame, text="Current Bird", variable=selection_var, value="current_bird",
+                   command=update_batch_combobox_cluster).grid(row=row_num, column=0, sticky="w")
     row_num += 1
+
+    batch_file_var = tk.StringVar()
+    cluster_batch_combobox = ttk.Combobox(container_frame,textvariable=batch_file_var)
+    cluster_batch_combobox.set("Select Batch File")
+    app_state.cluster_window.cluster_batch_combobox = cluster_batch_combobox
+    app_state.update_batch_select_combobox_cluster(select_path = selection_var.get())
+    cluster_batch_combobox.grid(row=2, column=1, sticky="ew")
 
     # Entry for cluster dataset name
     tk.Label(container_frame, text="Cluster Dataset Name:").grid(row=row_num, column=0, sticky="w")
@@ -492,7 +503,7 @@ def open_cluster_window(root, app_state, bird_combobox, experiment_combobox, day
     # Button to create cluster dataset
     tk.Button(
         container_frame, text="Create Cluster Dataset",
-        command=lambda: start_create_cluster_dataset_thread(app_state, dataset_name_entry.get(), use_selected_files_var.get(), selection_var.get(), bird_combobox, experiment_combobox, day_combobox)
+        command=lambda: start_create_cluster_dataset_thread(app_state, dataset_name_entry.get(), use_selected_files_var.get(), selection_var.get(), batch_file_var.get(), bird_combobox, experiment_combobox, day_combobox, root)
     ).grid(row=row_num, column=0, columnspan=2, pady=(10, 0), sticky="ew")
     row_num += 1
 
