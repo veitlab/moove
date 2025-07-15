@@ -166,16 +166,29 @@ def open_relabel_window(root, app_state, bird_combobox, experiment_combobox, day
     tk.Label(content_frame, text="Classification Network", font=("Arial", 16)).grid(row=row, column=0, columnspan=2, pady=10, sticky="nsew")
     row += 1
 
+    def update_batch_combobox_relabel():
+        app_state.update_batch_select_combobox_relabel(select_path=selection_var.get())
+
     # Radio buttons for selection
     selection_var = tk.StringVar(value="current_file")
     tk.Radiobutton(content_frame, text="Current File", variable=selection_var, value="current_file").grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(content_frame, text="Current Day", variable=selection_var, value="current_day").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(content_frame, text="Current Day", variable=selection_var, value="current_day",
+                   command=update_batch_combobox_relabel).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(content_frame, text="Current Experiment", variable=selection_var, value="current_experiment").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(content_frame, text="Current Experiment", variable=selection_var, value="current_experiment",
+                   command=update_batch_combobox_relabel).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(content_frame, text="Current Bird", variable=selection_var, value="current_bird").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(content_frame, text="Current Bird", variable=selection_var, value="current_bird",
+                   command=update_batch_combobox_relabel).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
+
+    batch_file_var = tk.StringVar()
+    relabel_batch_combobox = ttk.Combobox(content_frame,textvariable=batch_file_var, width=5)
+    relabel_batch_combobox.set("Select Batch File")
+    app_state.relabel_window.relabel_batch_combobox = relabel_batch_combobox
+    app_state.update_batch_select_combobox_relabel(select_path = selection_var.get())
+    relabel_batch_combobox.grid(row=2, column=1, sticky="ew")
 
     checkbox_var = tk.BooleanVar()
     tk.Checkbutton(content_frame, text="Overwrite Already Classified Files", variable=checkbox_var).grid(row=row, column=0, columnspan=2, sticky="w")
@@ -193,7 +206,7 @@ def open_relabel_window(root, app_state, bird_combobox, experiment_combobox, day
 
     # Relabel Button
     segment_btn_ml = tk.Button(content_frame, text="Relabel", command=lambda: start_classify_files_thread(app_state, app_state.current_classification_model.get(),
-                                                                                                           selection_var.get(), checkbox_var.get(),
+                                                                                                           selection_var.get(), checkbox_var.get(), batch_file_var.get(),
                                                                                                              bird_combobox, experiment_combobox, day_combobox))
     segment_btn_ml.grid(row=row, column=0, columnspan=2, sticky="ew")
 

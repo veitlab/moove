@@ -165,17 +165,17 @@ def normalize_spectrogram(spectrogram):
     return (spectrogram - mean) / std if std != 0 else spectrogram
 
 
-def start_classify_files_thread(app_state, model_name, selection, checkbox_ow, bird_combobox, experiment_combobox, day_combobox):
+def start_classify_files_thread(app_state, model_name, selection, checkbox_ow, batch_file, bird_combobox, experiment_combobox, day_combobox):
     """Start the classification process for selected files in a new thread."""
     from moove.utils import get_files_for_day, get_files_for_experiment, get_files_for_bird, get_file_data_by_index
 
     bird, experiment, day = bird_combobox.get(), experiment_combobox.get(), day_combobox.get()
     if selection == "current_day":
-        files = get_files_for_day(app_state, bird, experiment, day)
+        files = get_files_for_day(app_state, bird, experiment, day, batch_file)
     elif selection == "current_experiment":
-        files = get_files_for_experiment(app_state, bird, experiment)
+        files = get_files_for_experiment(app_state, bird, experiment, batch_file)
     elif selection == "current_bird":
-        files = get_files_for_bird(app_state, bird)
+        files = get_files_for_bird(app_state, bird, batch_file)
     elif selection == "current_file":
         files = [get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)["file_path"]]
 
