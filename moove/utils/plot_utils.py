@@ -108,7 +108,6 @@ def update_plots(display_dict, app_state, filepath):
     # check for catch file
     catch = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["catch_song"]
     feedback_time = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["feedback_info"]
-    print(feedback_time)
 
      # Update ax1 (Spectrogram)
     ax1.clear()
@@ -148,7 +147,6 @@ def update_plots(display_dict, app_state, filepath):
             for t in feedback_timings:
                 ax1.text(t, -0.01, '^', ha='center', va='top', color='tomato', fontsize=24,
                 transform=ax1.get_xaxis_transform(), zorder = 1000000)
-        print(feedback_timings)
         ax1.set_title(display_dict["file_name"], color=app_state.text_color)
 
     ax1.set_ylabel('Frequency (Hz)', color=app_state.text_color)
