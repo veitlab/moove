@@ -84,7 +84,7 @@ def load_recfile(file_path):
     hand_classified_pattern = r"Hand Classified = (\d+)"
     t_before_pattern = r"T Before = ([\d\.]+)"
     t_after_pattern = r"T After = ([\d\.]+)"
-    feedback_pattern = r"([\d\.]+)E\+?\d+ msec: FB # ([\w\.]+) : Templ = (\d+)"
+    feedback_pattern = r"([\d\.]+)E\+?\d+ msec: FB # ([A-Za-z0-9_\.\\/:]+) : Templ = (\d+)" # exchanged ([\w\.]+) for evtaf compatibility 
 
     # search for the patterns in the content
     date_match = re.search(date_pattern, content)
