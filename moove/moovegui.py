@@ -406,7 +406,10 @@ if not os.path.exists(full_path):
     app_state.logger.info(f"{current_file_name} not found, entry removed - defaulting to first file.")
 
 # update batch files with every GUI start
-wav_files = [f for f in os.listdir(app_state.data_dir) if f.endswith('.wav')]
+valid_files = set(
+    f for f in os.listdir(app_state.data_dir) 
+    if f.endswith('.wav') or f.endswith('.cbin')
+)
 for batch in batch_files:
     batch_path = os.path.join(app_state.data_dir, batch)
     
@@ -417,7 +420,7 @@ for batch in batch_files:
         
     with open(batch_path, 'r') as f:
         keep_files = f.read().splitlines()
-    filtered_files = [f for f in keep_files if f in wav_files]
+    filtered_files = [f for f in keep_files if f in valid_files]
     # only keep existing files in batches
     with open(batch_path, 'w') as f:
         f.write('\n'.join(filtered_files))
