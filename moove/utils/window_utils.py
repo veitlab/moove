@@ -12,7 +12,7 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
     resegment_window.title("Resegmentation")
     app_state.resegment_window = resegment_window
 
-    resegment_window.geometry("400x200")
+    resegment_window.geometry("400x450")
     resegment_window.grid_rowconfigure(0, weight=1)
     resegment_window.grid_columnconfigure(0, weight=1)
     resegment_window.grid_columnconfigure(1, weight=1)
@@ -34,16 +34,30 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
     tk.Label(left_frame, text="Evfuncs", font=("Arial", 16)).grid(row=row, column=0, columnspan=2, pady=10, sticky="ew")
     row += 1
 
+    def update_batch_combobox_resegment_ev():
+        app_state.update_batch_select_combobox_resegment_ev(select_path=ev_selection_var.get())
+
+
     # Radio buttons for Evfuncs selection
     ev_selection_var = tk.StringVar(value="current_file")
     tk.Radiobutton(left_frame, text="Current File", variable=ev_selection_var, value="current_file").grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(left_frame, text="Current Day", variable=ev_selection_var, value="current_day").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(left_frame, text="Current Day", variable=ev_selection_var, value="current_day",
+                   command=update_batch_combobox_resegment_ev).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(left_frame, text="Current Experiment", variable=ev_selection_var, value="current_experiment").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(left_frame, text="Current Experiment", variable=ev_selection_var, value="current_experiment",
+                   command=update_batch_combobox_resegment_ev).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(left_frame, text="Current Bird", variable=ev_selection_var, value="current_bird").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(left_frame, text="Current Bird", variable=ev_selection_var, value="current_bird",
+                   command=update_batch_combobox_resegment_ev).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
+
+    ev_batch_file_var = tk.StringVar()
+    resegment_batch_combobox_ev = ttk.Combobox(left_frame,textvariable=ev_batch_file_var)
+    resegment_batch_combobox_ev.set("Select Batch File")
+    app_state.resegment_window.resegment_batch_combobox_ev = resegment_batch_combobox_ev
+    app_state.update_batch_select_combobox_resegment_ev(select_path = ev_selection_var.get())
+    resegment_batch_combobox_ev.grid(row=2, column=1, sticky="ew")
 
     evfuncs_params = [
         ("Threshold:", 'threshold'),
@@ -61,7 +75,7 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
 
     segment_btn_evfuncs = tk.Button(
         left_frame, text="Segment",
-        command=lambda: start_segment_evfuncs(app_state, ev_selection_var.get(), bird_combobox, experiment_combobox, day_combobox)
+        command=lambda: start_segment_evfuncs(app_state, ev_selection_var.get(), ev_batch_file_var.get(), bird_combobox, experiment_combobox, day_combobox)
     )
     segment_btn_evfuncs.grid(row=row, column=0, columnspan=2, pady=(10, 0), sticky="ew")
 
@@ -75,16 +89,29 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
     tk.Label(right_frame, text="Segmentation Network", font=("Arial", 16)).grid(row=row, column=0, columnspan=2, pady=10, sticky="ew")
     row += 1
 
+    def update_batch_combobox_resegment():
+        app_state.update_batch_select_combobox_resegment(select_path=sm_selection_var.get())
+
     # Radio buttons for Segmentation Network selection
     sm_selection_var = tk.StringVar(value="current_file")
     tk.Radiobutton(right_frame, text="Current File", variable=sm_selection_var, value="current_file").grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(right_frame, text="Current Day", variable=sm_selection_var, value="current_day").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(right_frame, text="Current Day", variable=sm_selection_var, value="current_day",
+                   command=update_batch_combobox_resegment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(right_frame, text="Current Experiment", variable=sm_selection_var, value="current_experiment").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(right_frame, text="Current Experiment", variable=sm_selection_var, value="current_experiment",
+                   command=update_batch_combobox_resegment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-    tk.Radiobutton(right_frame, text="Current Bird", variable=sm_selection_var, value="current_bird").grid(row=row, column=0, columnspan=2, sticky="w")
+    tk.Radiobutton(right_frame, text="Current Bird", variable=sm_selection_var, value="current_bird",
+                   command=update_batch_combobox_resegment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
+
+    batch_file_var = tk.StringVar()
+    resegment_batch_combobox = ttk.Combobox(right_frame,textvariable=batch_file_var)
+    resegment_batch_combobox.set("Select Batch File")
+    app_state.resegment_window.resegment_batch_combobox = resegment_batch_combobox
+    app_state.update_batch_select_combobox_resegment(select_path = sm_selection_var.get())
+    resegment_batch_combobox.grid(row=2, column=1, sticky="ew")
 
     checkbox_var = tk.BooleanVar()
     tk.Checkbutton(right_frame, text="Overwrite Already Segmented Files", variable=checkbox_var).grid(row=row, column=0, columnspan=2, sticky="w")
@@ -124,7 +151,7 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
     segment_btn_ml = tk.Button(
         right_frame, text="Segment",
         command=lambda: start_segment_files_thread(app_state, app_state.current_segmentation_model.get(),
-                                                    sm_selection_var.get(), checkbox_var.get(),
+                                                    sm_selection_var.get(), checkbox_var.get(), batch_file_var.get(),
                                                       bird_combobox, experiment_combobox, day_combobox)
     )
     segment_btn_ml.grid(row=row, column=0, columnspan=2, pady=(10, 0), sticky="ew")
@@ -144,7 +171,7 @@ def open_relabel_window(root, app_state, bird_combobox, experiment_combobox, day
     # ensure the window stays in front
     relabel_window.transient(root)
 
-    relabel_window.geometry("400x200")
+    relabel_window.geometry("400x280")
     relabel_window.grid_rowconfigure(0, weight=1)
     relabel_window.grid_columnconfigure(0, weight=1)
 

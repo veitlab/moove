@@ -268,6 +268,40 @@ class AppState:
         cluster_datasets = [f for f in os.listdir(cluster_data_folder) if f.endswith(".pkl")]
         self.cluster_window.cluster_dataset_combobox['values'] = cluster_datasets
 
+    def update_batch_select_combobox_resegment_ev(self, select_path = "current_day"):
+        birds = os.path.abspath(os.path.join(self.data_dir, "..", ".."))
+        experiments = os.path.join(self.data_dir, "..")
+        day = self.data_dir
+        batch_files = [] 
+        if select_path == "current_day":
+            batch_files = [f for f in os.listdir(day) if re.match('.*batch.*', f)]
+        if select_path == "current_experiment":
+            batch_files = [f for f in os.listdir(experiments) if re.match('.*batch.*', f)]
+        if select_path == "current_bird":
+            batch_files = [f for f in os.listdir(birds) if re.match('.*batch.*', f)]
+        else:
+            pass
+        batch_files = ["All Files"] + batch_files
+        self.resegment_window.resegment_batch_combobox_ev['values'] = batch_files
+        self.resegment_window.resegment_batch_combobox_ev.set("All Files")
+
+    def update_batch_select_combobox_resegment(self, select_path = "current_day"):
+        birds = os.path.abspath(os.path.join(self.data_dir, "..", ".."))
+        experiments = os.path.join(self.data_dir, "..")
+        day = self.data_dir
+        batch_files = [] 
+        if select_path == "current_day":
+            batch_files = [f for f in os.listdir(day) if re.match('.*batch.*', f)]
+        if select_path == "current_experiment":
+            batch_files = [f for f in os.listdir(experiments) if re.match('.*batch.*', f)]
+        if select_path == "current_bird":
+            batch_files = [f for f in os.listdir(birds) if re.match('.*batch.*', f)]
+        else:
+            pass
+        batch_files = ["All Files"] + batch_files
+        self.resegment_window.resegment_batch_combobox['values'] = batch_files
+        self.resegment_window.resegment_batch_combobox.set("All Files")
+
     def update_batch_select_combobox_relabel(self, select_path = "current_day"):
         birds = os.path.abspath(os.path.join(self.data_dir, "..", ".."))
         experiments = os.path.join(self.data_dir, "..")
