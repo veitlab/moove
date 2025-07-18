@@ -41,13 +41,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create / read config file
-home_config_dir = os.path.join(Path.home(), ".moove")
+# Allow custom config directory via environment variable, fallback to ~/.moove
+moove_config_dir = os.environ.get('MOOVE_CONFIG_DIR')
+if moove_config_dir:
+    home_config_dir = os.path.expanduser(moove_config_dir)
+else:
+    home_config_dir = os.path.join(Path.home(), ".moove")
+
 config_file_path = os.path.join(home_config_dir, 'moove_config.ini')
 
 if not os.path.exists(config_file_path):
     example_config_file_path = os.path.join(os.path.dirname(__file__), 'moove_config.ini.example')
     os.makedirs(home_config_dir, exist_ok=True)
     shutil.copy(example_config_file_path, config_file_path)
+    logger.info(f"Created config file at: {config_file_path}")
 
 config = configparser.ConfigParser()
 config.read(config_file_path)

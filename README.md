@@ -63,6 +63,30 @@ C:\Users\<YourUsername>\AppData\Roaming\Python\<YourPythonVersion>\site-packages
 
 - Backup the existing `portaudio.dll` and replace it with the downloaded ASIO-enabled DLL, renaming it to `portaudio.dll`.
 
+## Configuration
+
+### Default Configuration Location
+
+By default, Moove stores its configuration file (`moove_config.ini`) in `~/.moove/`. This configuration file should be adjusted to fit your experiment setup.
+
+### Custom Configuration Directory
+
+To store the configuration in a different location, use the `MOOVE_CONFIG_DIR` environment variable:
+
+**Windows:**
+```cmd
+set MOOVE_CONFIG_DIR=D:\moove_config
+moovegui
+```
+
+**Linux/macOS:**
+```bash
+export MOOVE_CONFIG_DIR="/path/to/config"
+moovegui
+```
+
+**Benefits:** Enables different drives, network storage, project isolation, and multi-user setups.
+
 ## Usage
 
 Once installed, Moove offers two main entry points for operation:
@@ -83,7 +107,7 @@ To start, simply type `moovegui` or `moovetaf` in the terminal.
 This section outlines the typical workflow for setting up Moove and conducting experiments:
 
 1.  Baseline Recordings
-Begin with baseline recordings using MooveTaf to capture the bird’s songs without targeting. In the configuration file (moove_config.ini), set realtime_classification to False for these recordings. Additionally, set db_threshold for bout detection to define when a sequence starts and ends.
+Begin with baseline recordings using MooveTaf to capture the bird's songs without targeting. In the configuration file (moove_config.ini), set realtime_classification to False for these recordings. Additionally, set db_threshold for bout detection to define when a sequence starts and ends.
 
 2.  Manual Segmentation
 In the MooveGUI, use the "ResegmentationWindow" to manually segment recorded songs and adjust the segmentation points as needed.
