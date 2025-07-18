@@ -111,3 +111,9 @@ lena.veit@uni-tuebingen.de
 **Secondary contact:**  
 Nils Riekers  
 nils@riekers.it
+
+## License
+
+Moove is licensed under the MIT License. You are free to use, modify, and distribute the software, provided that you retain the copyright notice and give appropriate credit to the original authors.
+
+See [LICENSE](LICENSE) for details.
