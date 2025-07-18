@@ -226,7 +226,8 @@ def confirm_delete(app_state):
 
     del app_state.song_files[app_state.current_file_index]
 
-    with open(os.path.join(app_state.data_dir, "batch"), "w") as file:
+    # Use the current batch file instead of hardcoded "batch"
+    with open(os.path.join(app_state.data_dir, app_state.current_batch_file), "w") as file:
         for song in app_state.song_files:
             file.write(song + '\n')
 
@@ -242,9 +243,47 @@ def confirm_delete(app_state):
 
 def handle_delete(app_state):
     '''Function to handle the deletion of the displayed file'''
-    response = tk.messagebox.askokcancel("Confirm", "Are you sure you want to delete the displayed file?")
-    if response:
+    import tkinter as tk
+    from tkinter import messagebox
+    
+    current_file = app_state.song_files[app_state.current_file_index]
+    
+    # Create a custom dialog with three options
+    result = messagebox.askyesnocancel(
+        "Delete Options", 
+        f"How do you want to remove '{current_file}'?",
+        detail="Yes = Delete file from disk\nNo = Remove from batch only\nCancel = Do nothing"
+    )
+    
+    if result is True:  # Yes - Delete file completely
         confirm_delete(app_state)
+    elif result is False:  # No - Remove from batch only
+        remove_from_batch_only(app_state)
+    # result is None (Cancel) - Do nothing
+
+
+def remove_from_batch_only(app_state):
+    '''Remove file from current batch but keep it on disk'''
+    from moove.utils.plot_utils import plot_data
+    
+    # Remove from song_files list
+    del app_state.song_files[app_state.current_file_index]
+    
+    # Update the current batch file
+    with open(os.path.join(app_state.data_dir, app_state.current_batch_file), "w") as file:
+        for song in app_state.song_files:
+            file.write(song + '\n')
+    
+    # Update combobox
+    app_state.combobox['values'] = app_state.song_files
+    
+    # Navigate to next/previous file
+    if app_state.current_file_index >= len(app_state.song_files):
+        app_state.change_file(-1)
+        plot_data(app_state)
+    else:
+        app_state.change_file(0)
+        plot_data(app_state)
 
 
 def crop_not_mat(file_path, display_dict, x1_border, x2_border):
