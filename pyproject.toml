@@ -2,7 +2,7 @@
 name = "moove"
 version = "0.1.23"
 description = ""
-authors = ["Nils Riekers", "Franziska Heubach", "Jacqueline Goebl"]
+authors = ["Nils Riekers", "Franziska Heubach", "Jacqueline Goebl", "Lena Veit"]
 readme = "README.md"
 # Include all relevant data und folders
 include = [
