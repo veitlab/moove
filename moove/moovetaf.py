@@ -527,6 +527,12 @@ def stream_callback(indata, outdata, frames, time_info, status):
         else:
             not_catch_trial_flag = False
             wn_recfile_dict["catch_song"] = 1
+            # Add catch trial feedback information immediately when bout starts
+            trigger_time = t_before * 1000  # Initial trigger time at bout start
+            formatted_time = millisecond_to_fixed_notation(trigger_time)
+            file_path_catch = "catch_trial_no_playback"
+            template_value_catch = 0
+            wn_recfile_dict[formatted_time] = f"catch # {file_path_catch} : Templ = {template_value_catch}"
 
         logger.info("Not catch trial flag: %s", not_catch_trial_flag)
         logger.info("Threshold triggered")
@@ -705,7 +711,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                             t_before * 1000)
                                 formatted_time = millisecond_to_fixed_notation(trigger_time)
 
-                                # catch and not catch
+                                # Only handle non-catch trials here (catch trials already have feedback)
                                 if not_catch_trial_flag:
                                     if computer_generated_white_noise:
                                         # playback of computer generated white noise
@@ -731,12 +737,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                     # I (JG) think this is so that classification isn't going on during playback
                                     no_classify_flag_wn_idx2wait = int(
                                         seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
-
-                                else:
-                                    file_path_catch = "path_to_catch_trial.wav"
-                                    template_value_catch = 0  # Adjust as necessary
-                                    wn_recfile_dict[
-                                        formatted_time] = f"catch # {file_path_catch} : Templ = {template_value_catch}"
+                                # For catch trials, do nothing here as feedback is already recorded at bout start
                         # After classification, check if an offset is pending
                         if offset_pending:
                             sub_y_long_rev = y_pred_list[::-1]
