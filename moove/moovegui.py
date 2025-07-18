@@ -9,6 +9,7 @@ import logging
 import matplotlib as mpl
 import ctypes
 import matplotlib.pyplot as plt
+import platform
 
 # Third-party library imports
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -529,7 +530,14 @@ rect_selector_ax3 = RectangleSelector(ax3, on_select, useblit=True,
 # Update button
 center_frame = tk.Frame(root)
 button_frame = tk.Frame(root)
-btn_update = tk.Button(button_frame, text="⟳", font=("Noto Sans", 9), command=lambda: update(app_state))
+
+# Platform-specific styling for refresh button to fix macOS display issue
+if platform.system() == 'Darwin':  # macOS
+    refresh_text = "↻"  # Alternative refresh symbol that renders better on macOS
+else:  # Windows and other platforms
+    refresh_text = "⟳"  # Original symbol works fine on Windows
+
+btn_update = tk.Button(button_frame, text=refresh_text, command=lambda: update(app_state))
 btn_update.pack(side=tk.LEFT, padx=(0, 20))
 
 # Navigation buttons
