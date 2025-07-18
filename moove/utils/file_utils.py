@@ -31,9 +31,25 @@ def create_batch_file(data_dir):
 
 
 def find_batch_files(day_path):
-    """Find all files in the day directory that match the pattern '.*batch.*'"""
+    """Find all files in the day directory that match the pattern '.*batch.*' with allowed extensions only"""
     import re
-    batch_files = [f for f in os.listdir(day_path) if re.match('.*batch.*', f)]
+    
+    # Define allowed extensions for batch files
+    allowed_extensions = ['', '.txt', '.keep']  # No extension, .txt, .keep
+    
+    all_files = os.listdir(day_path)
+    batch_files = []
+    
+    for f in all_files:
+        # Check if filename contains 'batch'
+        if re.search(r'batch', f, re.IGNORECASE):
+            # Get file extension
+            _, ext = os.path.splitext(f)
+            
+            # Only include files with allowed extensions
+            if ext in allowed_extensions:
+                batch_files.append(f)
+    
     # create default batch files if non found/ no 'batch' default found
     if not batch_files:
         create_batch_file(day_path)
