@@ -74,11 +74,6 @@ def update(app_state):
 
     for batch in batch_files:
         batch_path = os.path.join(app_state.data_dir, batch)
-        
-        # Skip updating batch files with "keep" in their name
-        if "keep" in batch.lower():
-            app_state.logger.info(f"Skipping update for keep file: {batch}")
-            continue
             
         with open(batch_path, 'r') as f:
             keep_files = f.read().splitlines()
