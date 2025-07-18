@@ -55,7 +55,17 @@ def start_create_classification_training_dataset(app_state, dataset_name, use_se
         progressbar = ttk.Progressbar(app_state.training_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
         progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
 
-        threading.Thread(target=create_classification_training_dataset, args=(app_state, progressbar, dataset_name, files, root)).start()
+        # Create wrapper function for thread management
+        def thread_wrapper():
+            current_thread = threading.current_thread()
+            try:
+                create_classification_training_dataset(app_state, progressbar, dataset_name, files, root)
+            finally:
+                app_state.remove_thread(current_thread)
+        
+        thread = threading.Thread(target=thread_wrapper, name="CreateClassDatasetThread")
+        app_state.add_thread(thread)
+        thread.start()
 
 
 def create_classification_training_dataset(app_state, progressbar, dataset_name, files, root):
@@ -197,7 +207,18 @@ def start_classify_files_thread(app_state, model_name, selection, checkbox_ow, b
     max_value = len(files)
     progressbar = ttk.Progressbar(app_state.relabel_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
     progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
-    threading.Thread(target=ml_classify_file, args=(app_state, progressbar, max_value, files, model, metadata, device)).start()
+    
+    # Create wrapper function for thread management
+    def thread_wrapper():
+        current_thread = threading.current_thread()
+        try:
+            ml_classify_file(app_state, progressbar, max_value, files, model, metadata, device)
+        finally:
+            app_state.remove_thread(current_thread)
+    
+    thread = threading.Thread(target=thread_wrapper, name="ClassifyFilesThread")
+    app_state.add_thread(thread)
+    thread.start()
 
 
 def ml_classify_file(app_state, progressbar, max_value, all_files, model, metadata, device):

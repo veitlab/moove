@@ -5,6 +5,7 @@ import os
 import threading
 import json
 import re
+from datetime import datetime
 
 class AppState:
     def __init__(self, global_dir):
@@ -19,6 +20,8 @@ class AppState:
         self.ax1 = None
         self.ax2 = None
         self.ax3 = None
+        self.ax2_background = None
+        self.ax3_background = None
         self.last_ax3_marker = None
         self.display_dict = None
         self.edit_type = None
@@ -112,6 +115,10 @@ class AppState:
         self.current_classification_model = None
         self.init_flag = False
         self.update_timer = None
+
+        # Thread tracking for graceful shutdown
+        self.active_threads = []  # List to track all active background threads
+        self.thread_lock = threading.Lock()  # Thread-safe access to active_threads
 
         # Set up logging
         self.logger = logging.getLogger(__name__)
@@ -363,3 +370,77 @@ class AppState:
         batch_files = ["All Files"] + batch_files
         self.cluster_window.cluster_batch_combobox['values'] = batch_files
         self.cluster_window.cluster_batch_combobox.set("All Files")
+
+    def add_thread(self, thread):
+        with self.thread_lock:
+            self.active_threads.append(thread)
+
+    def remove_thread(self, thread):
+        with self.thread_lock:
+            if thread in self.active_threads:
+                self.active_threads.remove(thread)
+
+    def shutdown_all_threads(self):
+        """Gracefully shutdown all active threads"""
+        with self.thread_lock:
+            active_count = len(self.active_threads)
+            
+        if active_count > 0:
+            self.logger.info(f"Shutting down {active_count} active threads...")
+            
+            # Stop Dash server if running
+            if hasattr(self, 'server') and self.server:
+                try:
+                    self.server.shutdown()
+                    self.server = None
+                    self.logger.debug("Dash server shutdown")
+                except Exception as e:
+                    self.logger.debug(f"Error shutting down server: {e}")
+            
+            # Join all threads with shorter timeout for faster shutdown
+            with self.thread_lock:
+                threads_to_join = self.active_threads.copy()
+                
+            for thread in threads_to_join:
+                if thread.is_alive():
+                    try:
+                        thread.join(timeout=1.0)  # Even shorter timeout
+                        if thread.is_alive():
+                            self.logger.debug(f"Thread {thread.name} did not join within timeout")
+                        else:
+                            self.logger.debug(f"Thread {thread.name} joined successfully")
+                    except Exception as e:
+                        self.logger.debug(f"Error joining thread {thread.name}: {e}")
+            
+            # More aggressive force termination
+            with self.thread_lock:
+                remaining_threads = [t for t in self.active_threads if t.is_alive()]
+                
+            if remaining_threads:
+                self.logger.info(f"Force terminating {len(remaining_threads)} stubborn threads")
+                for thread in remaining_threads:
+                    if thread.is_alive() and hasattr(thread, 'ident') and thread.ident:
+                        try:
+                            import ctypes
+                            res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+                                ctypes.c_long(thread.ident), 
+                                ctypes.py_object(SystemExit)
+                            )
+                            # Check if the call affected more than one thread
+                            if res > 1:
+                                # Undo the effect on extra threads
+                                ctypes.pythonapi.PyThreadState_SetAsyncExc(thread.ident, None)
+                            self.logger.debug(f"Force terminated thread {thread.name}")
+                        except Exception as e:
+                            self.logger.debug(f"Could not force terminate thread {thread.name}: {e}")
+                            # Try alternative termination method
+                            try:
+                                thread._stop()
+                            except:
+                                pass
+            
+            # Clear the thread list
+            with self.thread_lock:
+                self.active_threads.clear()
+                
+            self.logger.info("Thread shutdown completed")

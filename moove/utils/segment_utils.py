@@ -51,8 +51,18 @@ def start_segment_evfuncs(app_state, selection, batch_file, bird_combobox, exper
     progressbar = ttk.Progressbar(app_state.resegment_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
     progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
     
+    # Create wrapper function for thread management
+    def thread_wrapper():
+        current_thread = threading.current_thread()
+        try:
+            segment_evfuncs(app_state, progressbar, files)
+        finally:
+            app_state.remove_thread(current_thread)
+    
     # Start the segmentation thread
-    threading.Thread(target=segment_evfuncs, args=(app_state, progressbar, files)).start()
+    thread = threading.Thread(target=thread_wrapper, name="SegmentEvfuncsThread")
+    app_state.add_thread(thread)
+    thread.start()
 
 
 def segment_evfuncs(app_state, progressbar, files):
@@ -351,7 +361,18 @@ def start_segment_files_thread(app_state, segmentation_model_name, selection, ch
     max_value = len(files)
     progressbar = ttk.Progressbar(app_state.resegment_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
     progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
-    threading.Thread(target=segment_files_ml, args=(app_state, progressbar, files, model, metadata, device)).start()
+    
+    # Create wrapper function for thread management
+    def thread_wrapper():
+        current_thread = threading.current_thread()
+        try:
+            segment_files_ml(app_state, progressbar, files, model, metadata, device)
+        finally:
+            app_state.remove_thread(current_thread)
+    
+    thread = threading.Thread(target=thread_wrapper, name="SegmentMLThread")
+    app_state.add_thread(thread)
+    thread.start()
 
 
 def start_create_segmentation_training_dataset(app_state, dataset_name, use_selected_files, selection, batch_file, bird_combobox, experiment_combobox, day_combobox, root):
@@ -384,4 +405,15 @@ def start_create_segmentation_training_dataset(app_state, dataset_name, use_sele
         max_value = len(files)
         progressbar = ttk.Progressbar(app_state.training_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
         progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
-        threading.Thread(target=create_segmentation_training_dataset, args=(app_state, progressbar, dataset_name, files, root)).start()
+        
+        # Create wrapper function for thread management
+        def thread_wrapper():
+            current_thread = threading.current_thread()
+            try:
+                create_segmentation_training_dataset(app_state, progressbar, dataset_name, files, root)
+            finally:
+                app_state.remove_thread(current_thread)
+        
+        thread = threading.Thread(target=thread_wrapper, name="CreateSegDatasetThread")
+        app_state.add_thread(thread)
+        thread.start()

@@ -624,9 +624,102 @@ plot_data(app_state)
 app_state.init_flag = True
 
 
+def force_exit_after_timeout():
+    """Force exit the application after a timeout"""
+    import time
+    import os
+    import signal
+    
+    time.sleep(3.0)  # Wait 3 seconds
+    
+    try:
+        logger.warning("Timeout reached - force killing application")
+        os.kill(os.getpid(), signal.SIGKILL)
+    except:
+        try:
+            os._exit(1)
+        except:
+            pass
+
+
 def on_closing():
-    app_state.save_state()
-    root.destroy()
+    """Handle application closing with graceful thread shutdown"""
+    try:
+        # Check for active threads
+        with app_state.thread_lock:
+            active_count = len(app_state.active_threads)
+        
+        if active_count > 0:
+            # Ask user if they want to close with active threads (simplified to OK/Cancel)
+            from tkinter import messagebox
+            result = messagebox.askokcancel(
+                "Active Threads", 
+                f"There {'is' if active_count == 1 else 'are'} {active_count} active thread{'s' if active_count > 1 else ''} running.\n\n"
+                f"Closing will terminate {'it' if active_count == 1 else 'them'}. Continue?"
+            )
+            
+            if not result:  # User chose Cancel
+                return  # Don't close the application
+            
+            logger.info(f"User confirmed closing with {active_count} active threads")
+            logger.info("Shutting down threads...")
+            app_state.shutdown_all_threads()
+        
+        # Start timeout timer as backup
+        import threading
+        timeout_thread = threading.Thread(target=force_exit_after_timeout, daemon=True)
+        timeout_thread.start()
+        
+        # Save application state
+        app_state.save_state()
+        logger.info("Application state saved")
+        
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
+    
+    # Simplified but more reliable shutdown
+    try:
+        logger.info("Starting application shutdown...")
+        
+        # Stop the mainloop first
+        root.quit()
+        
+        # Give a moment for cleanup
+        root.update()
+        
+        # Destroy all widgets
+        root.destroy()
+        
+        logger.info("Tkinter cleanup completed")
+        
+    except Exception as e:
+        logger.error(f"Error during Tkinter cleanup: {e}")
+    
+    # Force exit using multiple methods
+    try:
+        import sys
+        import os
+        import signal
+        
+        logger.warning("Forcing application exit...")
+        
+        # Method 1: Standard exit
+        sys.exit(0)
+        
+    except:
+        try:
+            # Method 2: OS exit
+            os._exit(0)
+        except:
+            try:
+                # Method 3: Kill signal (Unix/macOS)
+                os.kill(os.getpid(), signal.SIGTERM)
+            except:
+                try:
+                    # Method 4: Kill signal force (Unix/macOS)
+                    os.kill(os.getpid(), signal.SIGKILL)
+                except:
+                    pass
 
 
 def main():

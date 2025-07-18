@@ -196,7 +196,16 @@ def handle_playback(app_state):
     display_dict = app_state.display_dict
     ax1 = app_state.ax1
 
-    play_sound_thread = threading.Thread(target=play_sound, args=(display_dict, ax1))
+    # Create wrapper function for thread management
+    def thread_wrapper():
+        current_thread = threading.current_thread()
+        try:
+            play_sound(display_dict, ax1)
+        finally:
+            app_state.remove_thread(current_thread)
+
+    play_sound_thread = threading.Thread(target=thread_wrapper, name="PlaybackThread")
+    app_state.add_thread(play_sound_thread)
     play_sound_thread.start()
 
 

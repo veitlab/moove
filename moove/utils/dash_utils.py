@@ -187,7 +187,11 @@ def run_flask_server(app_state, dataset_name):
 
     app_state.logger.debug(f"Starting Flask server for dataset: {dataset_name}")
     app_state.server = make_server('localhost', 8050, server)
-    app_state.server_thread = threading.Thread(target=app_state.server.serve_forever)
+    app_state.server_thread = threading.Thread(target=app_state.server.serve_forever, name="DashServerThread")
+    
+    # Register the server thread
+    app_state.add_thread(app_state.server_thread)
+    
     app_state.server_thread.start()
     threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:8050")).start()
 

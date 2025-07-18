@@ -50,7 +50,18 @@ def start_create_cluster_dataset_thread(app_state, dataset_name, use_selected_fi
         max_value = len(files)
         progressbar = ttk.Progressbar(app_state.cluster_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
         progressbar.grid(row=999, column=0, columnspan=2, pady=(10, 0), sticky=tk.W + tk.E)
-        threading.Thread(target=create_cluster_dataset, args=(app_state, dataset_name, progressbar, max_value, files, root)).start()
+        
+        # Create wrapper function for thread management
+        def thread_wrapper():
+            current_thread = threading.current_thread()
+            try:
+                create_cluster_dataset(app_state, dataset_name, progressbar, max_value, files, root)
+            finally:
+                app_state.remove_thread(current_thread)
+        
+        thread = threading.Thread(target=thread_wrapper, name="CreateClusterDatasetThread")
+        app_state.add_thread(thread)
+        thread.start()
 
 
 def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_files, root):
@@ -155,7 +166,18 @@ def start_clustering_thread(root, app_state, dataset_name_entry):
         messagebox.showinfo("Error", "Selected cluster dataset not valid! Perhaps you forgot to pick a dataset?")
     else:
         messagebox.showinfo("Info", "Clustering started. This may take a while, please wait!")
-    threading.Thread(target=run_clustering, args=(root, app_state, dataset_name)).start()
+    
+    # Create wrapper function for thread management
+    def thread_wrapper():
+        current_thread = threading.current_thread()
+        try:
+            run_clustering(root, app_state, dataset_name)
+        finally:
+            app_state.remove_thread(current_thread)
+    
+    thread = threading.Thread(target=thread_wrapper, name="ClusteringThread")
+    app_state.add_thread(thread)
+    thread.start()
 
 
 def run_clustering(root, app_state, dataset_name):
