@@ -129,10 +129,6 @@ Finally, update the configuration file with the names of the trained segmentatio
 For questions, issues, or feedback regarding Moove, please contact:
 
 **Primary contact:**  
-Dr. Lena Veit  
-lena.veit@uni-tuebingen.de
-
-**Secondary contact:**  
 Nils Riekers  
 nils@riekers.it
 
