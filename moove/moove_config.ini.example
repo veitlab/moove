@@ -1,5 +1,5 @@
 [GENERAL]
-global_dir = /Users/riekers/Desktop/moove_test
+global_dir = ~/.moove
 
 [GUI]
 upper_spec_plot = 12500
