@@ -66,18 +66,20 @@ def update(app_state):
     """
     Update all batch files and update the GUI.
     """
-    from moove.utils.file_utils import find_batch_files, get_file_data_by_index, read_batch
+    from moove.utils.file_utils import find_batch_files, get_file_data_by_index, read_batch, create_batch_file
     from moove.utils.plot_utils import update_plots
 
     batch_files = find_batch_files(app_state.data_dir)
-    wav_files = [f for f in os.listdir(app_state.data_dir) if f.endswith('.wav')]
+    valid_files = [f for f in os.listdir(app_state.data_dir) if f.endswith('.wav') or f.endswith('.cbin')]
 
+    if not batch_files:
+        create_batch_file(os.path.join(app_state.data_dir))
     for batch in batch_files:
         batch_path = os.path.join(app_state.data_dir, batch)
             
         with open(batch_path, 'r') as f:
             keep_files = f.read().splitlines()
-        filtered_files = [f for f in keep_files if f in wav_files]
+        filtered_files = [f for f in keep_files if f in valid_files]
         with open(batch_path, 'w') as f:
             f.write('\n'.join(filtered_files))
         

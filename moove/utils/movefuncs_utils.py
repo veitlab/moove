@@ -235,7 +235,7 @@ def confirm_delete(app_state):
 
     del app_state.song_files[app_state.current_file_index]
 
-    # Use the current batch file instead of hardcoded "batch"
+    # Use the current batch file instead of default "batch.txt"
     with open(os.path.join(app_state.data_dir, app_state.current_batch_file), "w") as file:
         for song in app_state.song_files:
             file.write(song + '\n')

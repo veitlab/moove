@@ -31,7 +31,7 @@ class AppState:
         self.data_dir = ""
         self.current_file_index = 0
         self.song_files = []
-        self.current_batch_file = "batch"  # Default batch file
+        self.current_batch_file = "batch.txt"  # Default batch file
         self.original_x_range = None
         self.original_y_range_ax1 = None
         self.original_y_range_ax2 = None

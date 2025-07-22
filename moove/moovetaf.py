@@ -295,8 +295,8 @@ def daily_initialization(data_output_folder_path, experiment_name, bird_name):
     if not os.path.exists(day_folder):
         os.makedirs(day_folder)
 
-    # Create empty file "batch" in day_folder (if it does not exist)
-    batch_path = os.path.join(day_folder, "batch")
+    # Create empty file "batch.txt" in day_folder (if it does not exist)
+    batch_path = os.path.join(day_folder, "batch.txt")
     if not os.path.exists(batch_path):
         with open(batch_path, 'w') as f:
             f.write("")
@@ -326,7 +326,7 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
         logger.info("Not enough data to save")
         return
 
-    batch_path = os.path.join(save_path, "batch")
+    batch_path = os.path.join(save_path, "batch.txt")
 
     with open(batch_path, "r") as file:
         lines = file.readlines()

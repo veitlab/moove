@@ -175,8 +175,8 @@ def update_selected_day(app_state):
         # Update batch files dropdown
         batch_files = find_batch_files(selected_day_path)
         app_state.batch_combobox['values'] = batch_files
-        app_state.batch_combobox.set("batch")  # Reset to default batch
-        app_state.current_batch_file = "batch"
+        app_state.batch_combobox.set("batch.txt")  # Reset to default batch
+        app_state.current_batch_file = "batch.txt"
 
         # Load song files from default batch
         app_state.song_files = read_batch(selected_day_path, app_state.current_batch_file)
@@ -388,7 +388,7 @@ if app_state.current_batch_file in batch_files:
     app_state.song_files = read_batch(selected_day_path, app_state.current_batch_file)
 else:
     # load default batch if previous batch not found
-    app_state.current_batch_file = "batch"
+    app_state.current_batch_file = "batch.txt"
     app_state.song_files = read_batch(selected_day_path)
 
 if app_state.current_file_index is None:

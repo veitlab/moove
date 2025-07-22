@@ -53,15 +53,15 @@ def find_batch_files(day_path):
     # create default batch files if non found/ no 'batch' default found
     if not batch_files:
         create_batch_file(day_path)
-        batch_files = ['batch']  # Add the newly created file to the list
-    if 'batch' not in batch_files:
+        batch_files = ['batch.txt']  # Add the newly created file to the list
+    if 'batch.txt' not in batch_files:
         create_batch_file(day_path)     
         # ensure default 'batch' is first   
-        batch_files.insert(0, 'batch') 
+        batch_files.insert(0, 'batch.txt') 
     return batch_files
 
 
-def read_batch(day_path, batch_file="batch"):
+def read_batch(day_path, batch_file="batch.txt"):
     """Read and return the contents of the specified batch file as a list of lines."""
     file_path = os.path.join(day_path, batch_file)
     with open(file_path, "r") as file:
@@ -154,7 +154,7 @@ def save_seg_class_recfile(filepath, segmented, classified):
         f.writelines(new_lines)
 
 
-def get_files_for_day(app_state, bird, experiment, day, batch_file="batch"):
+def get_files_for_day(app_state, bird, experiment, day, batch_file="batch.txt"):
     """Return files for a specific day (and batch) within the experiment and bird directory."""
     day_path = os.path.join(app_state.config['rec_data'], bird, experiment, day)
     if batch_file == "All Files":
@@ -165,7 +165,7 @@ def get_files_for_day(app_state, bird, experiment, day, batch_file="batch"):
     return [os.path.join(day_path, f) for f in files]
 
 
-def get_files_for_experiment(app_state, bird, experiment, batch_file="batch"):
+def get_files_for_experiment(app_state, bird, experiment, batch_file="batch.txt"):
     """Return all files for a given experiment of the specified bird."""
     experiment_path = os.path.join(app_state.config['rec_data'], bird, experiment)
     all_files = []
@@ -175,7 +175,7 @@ def get_files_for_experiment(app_state, bird, experiment, batch_file="batch"):
     return all_files
 
 
-def get_files_for_bird(app_state, bird, batch_file="batch"):
+def get_files_for_bird(app_state, bird, batch_file="batch.txt"):
     """Return all files for the specified bird."""
     bird_path = os.path.join(app_state.config['rec_data'], bird)
     all_files = []
