@@ -15,19 +15,19 @@ def get_directories(path):
 
 
 def create_batch_file(data_dir):
-    # scan the directory for .wav files
-    wav_files = [f for f in os.listdir(data_dir) if f.endswith('.wav')]
+    # scan the directory for .wav and .cbin files
+    valid_files = [f for f in os.listdir(data_dir) if f.endswith('.wav') or f.endswith('.cbin')]
 
     # path to batch file
-    batch_path = os.path.join(data_dir, 'batch')
+    batch_path = os.path.join(data_dir, 'batch.txt')
 
     # open batch file for writing
     with open(batch_path, 'w') as batch_file:
-        for wav_file in wav_files:
-            # write each .wav file name to batch file
-            batch_file.write(f"{wav_file}\n")
+        for audio_file in valid_files:
+            # write each .wav and .cbin file name to batch file
+            batch_file.write(f"{audio_file}\n")
 
-    print(f"Default batch file created with {len(wav_files)} entries.")
+    print(f"Default batch file created with {len(valid_files)} entries.")
 
 
 def find_batch_files(day_path):
