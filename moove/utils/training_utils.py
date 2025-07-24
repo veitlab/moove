@@ -623,10 +623,10 @@ def start_classification_training(root, app_state, dataset_name, bird):
         val_data, val_labels = downsample_data(val_data, val_labels)
         test_data, test_labels = downsample_data(test_data, test_labels)
 
-        # Convert labels to tensors
-        train_labels = torch.tensor(train_labels).long()
-        val_labels = torch.tensor(val_labels).long()
-        test_labels = torch.tensor(test_labels).long()
+    # Convert labels to tensors
+    train_labels = torch.tensor(train_labels).long()
+    val_labels = torch.tensor(val_labels).long()
+    test_labels = torch.tensor(test_labels).long()
 
     # Create DataLoaders
     train_dataset = TensorDataset(torch.stack(train_data), train_labels)
