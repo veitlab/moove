@@ -27,7 +27,7 @@ def create_batch_file(data_dir):
             # write each .wav and .cbin file name to batch file
             batch_file.write(f"{audio_file}\n")
 
-    print(f"Default batch file created with {len(valid_files)} entries.")
+    print(f"Default batch.txt file created with {len(valid_files)} entries.")
 
 
 def find_batch_files(day_path):
