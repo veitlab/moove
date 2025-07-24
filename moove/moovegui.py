@@ -71,6 +71,11 @@ target_bird_x_dir = os.path.join(global_dir, "rec_data", "bird_x")
 if not os.path.exists(target_bird_x_dir):
     shutil.copytree(package_example_data, target_bird_x_dir)
 
+package_example_data_WN = os.path.join(os.path.dirname(__file__), "example_data", "white_noise")
+target_WN_dir = os.path.join(global_dir, "playbacks", "white_noise")
+if not os.path.exists(target_WN_dir):
+    shutil.copytree(package_example_data_WN, target_WN_dir)
+
 # Create the main window
 root = tk.Tk()
 root.title("MooveGUI")
