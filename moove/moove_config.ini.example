@@ -11,8 +11,8 @@ spec_noverlap = 896
 spec_nfft = 1024
 
 [TAF]
-bird_name = ye00pu07
-experiment_name = baseline
+bird_name = bird_x
+experiment_name = experiment_a
 
 # rec settings
 frame_rate = 44100
@@ -21,10 +21,11 @@ t_before = 2
 t_after = 1
 min_bout_duration = 6
 memory_cleanup_interval = 60
+input_channels = 1
 
-[ye00pu07]
+[bird_x]
 # trained_models
-bout_threshold_db = -30
+bout_threshold_db = -25
 window_size = 10
 bandpass_lowcut = 500
 bandpass_highcut = 15000
@@ -36,10 +37,10 @@ segmentation_model_name = bird_x_example_seg_model.pth
 classification_model_name = bird_x_example_class_model.pth
 
 # white noise
-targeted_sequence = [he]a$
+targeted_sequence = [jc]a$
 catch_trial_probability = 0.1
 white_noise_duration = 0.08
-playback_dir = ~/.moove/playbacks/ye00pu07/
+playback_dir = ~/.moove/playbacks/white_noise/
 trigger_time_offset = 0.005
 
 # sliding interval algorithm for segmentation network
