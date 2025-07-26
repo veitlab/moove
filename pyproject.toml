@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "moove"
-version = "0.1.31"
+version = "0.1.32"
 description = ""
 authors = ["Nils Riekers", "Franziska Heubach", "Jacqueline Goebl", "Lena Veit"]
 readme = "README.md"
