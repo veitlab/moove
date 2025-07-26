@@ -51,28 +51,37 @@ global_dir = os.path.expanduser(global_dir)
 os.makedirs(os.path.join(global_dir, "rec_data"), exist_ok=True)
 os.makedirs(os.path.join(global_dir, "playbacks"), exist_ok=True)
 
+# Variables needed regardless of realtime_classification
+# mooeve_config readout
+# section TAF
 bird_name = config.get('TAF', 'bird_name')
 experiment_name = config.get('TAF', 'experiment_name')
 frame_rate = int(config.get('TAF', 'frame_rate'))
+chunk_size = int(config.get('TAF', 'chunk_size'))
 t_before = float(config.get('TAF', 't_before'))  # Already in seconds
 t_after = float(config.get('TAF', 't_after'))  # Already in seconds
 min_bout_duration = float(config.get('TAF', 'min_bout_duration'))
 memory_cleanup_interval = int(config.get('TAF', 'memory_cleanup_interval'))
+config_input_channels = int(config.get('TAF', 'input_channels'))
 
-realtime_classification = config.getboolean(bird_name, 'realtime_classification')
+# section bird
 data_output_folder_path = os.path.join(global_dir, 'rec_data')
-
-# Variables needed regardless of realtime_classification
-chunk_size = int(config.get('TAF', 'chunk_size'))
+# trained_models
 bout_threshold_db = int(config.get(bird_name, 'bout_threshold_db'))
 window_size = int(config.get(bird_name, 'window_size'))
 bandpass_lowcut = int(config.get(bird_name, 'bandpass_lowcut'))
 bandpass_highcut = int(config.get(bird_name, 'bandpass_highcut'))
 bandpass_order = int(config.get(bird_name, 'bandpass_order'))
+
+# bout detection (threshold parameters)
+realtime_classification = config.getboolean(bird_name, 'realtime_classification')
+
+# white noise
+catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 white_noise_duration = float(config.get(bird_name, 'white_noise_duration'))
 trigger_time_offset = float(config.get(bird_name, 'trigger_time_offset'))
-catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 
+# sliding interval algorithm for segmentation network
 min_silent_duration = float(config.get(bird_name, 'min_silent_duration'))
 min_syllable_length = float(config.get(bird_name, 'min_syllable_length'))
 
