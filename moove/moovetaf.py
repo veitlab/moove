@@ -19,6 +19,136 @@ from pathlib import Path
 from moove.utils.movefuncs_utils import save_notmat
 from moove import templates
 
+
+def seconds_to_index(seconds, chunk_size, sample_rate):
+    """Converts seconds to an index based on chunk size and sample rate."""
+    index_size = int((seconds * sample_rate) // chunk_size)
+    return index_size
+
+
+def index_to_seconds(index, chunk_size, sample_rate):
+    """Converts an index to seconds based on chunk size and sample rate."""
+    seconds = (index * chunk_size) / sample_rate
+    return seconds
+
+
+def calculate_db(waveform):
+    """Calculates the decibel value of a waveform."""
+    rms = np.sqrt(np.mean(waveform ** 2))
+    rms = max(rms, 1e-10)
+    decibel = 20 * np.log10(rms)
+    return decibel
+
+
+''' I (Jacqui) think this function is useless because it never gets called on'''
+
+
+def output_callback(outdata, frames, time_info, status):
+    """Callback function for audio output stream."""
+    global audio_buffer, is_playing_white_noise
+
+    if is_playing_white_noise and len(audio_buffer) >= frames:
+        outdata[:] = audio_buffer[:frames].reshape(-1, 1)
+        audio_buffer = audio_buffer[frames:]
+    else:
+        outdata.fill(0)
+        is_playing_white_noise = False
+
+
+def play_white_noise(duration_ms):
+    """Plays white noise for the specified duration in milliseconds."""
+    global is_playing_white_noise, white_noise_index, white_noise
+    is_playing_white_noise = True
+    white_noise_index = 0
+    white_noise = generate_white_noise(duration_ms, frame_rate)
+
+
+def generate_white_noise(duration_ms, frame_rate, dtype=np.float32):
+    """Generates white noise for the specified duration in milliseconds."""
+    num_samples = int(frame_rate * duration_ms / 1000)
+    return (np.random.randn(num_samples)).astype(dtype)
+
+
+def play_playback_file(key):
+    global is_playing_playback_file, playback_sound_index, playback_sound
+    is_playing_playback_file = True
+    playback_sound, sr = playback_sounds[key]
+    playback_sound_index = 0
+
+
+def apply_butter_bandpass_filter(data, numerator_coeffs, denominator_coeffs, zi):
+    """Applies a Butterworth bandpass filter to the data."""
+    y, zf = lfilter(numerator_coeffs, denominator_coeffs, data, zi=zi)
+    return y, zf
+
+
+def millisecond_to_fixed_notation(ms):
+    """Formats milliseconds to scientific notation string."""
+    coeff, exp = "{:.6E}".format(ms).split("E")
+    exp = str(int(exp))  # removes leading zero
+    return f"{coeff}E{exp}"
+
+
+def clean_lists(lists, n):
+    """Cleans lists by keeping only the last n elements."""
+    for i in range(len(lists)):
+        try:
+            lists[i][:] = lists[i][-n:]
+        except Exception as e:
+            logger.debug(e)
+            continue
+
+
+def butter_bandpass_coeffs(lowcut, highcut, fs, order=5):
+    """Calculates Butterworth bandpass filter coefficients."""
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    numerator_coeffs, denominator_coeffs = butter(order, [low, high], btype='band')
+    return numerator_coeffs, denominator_coeffs
+
+
+def normalize_spectrogram(spectrogram):
+    """Normalizes the spectrogram by subtracting mean and dividing by standard deviation."""
+    mean = spectrogram.mean()
+    std = spectrogram.std()
+    normalized_spectrogram = (spectrogram - mean) / std if std != 0 else spectrogram
+    return normalized_spectrogram
+
+
+# change the regular expression comparison with the last syllables recorded
+def check_targeted_sequence(lst, targeted_sequence):
+    """Checks if the last elements of lst match the targeted_sequence."""
+    recorded_sequence = ''.join(lst)
+    return re.search(targeted_sequence, recorded_sequence)
+
+
+def daily_initialization(data_output_folder_path, experiment_name, bird_name):
+    """Initializes daily folders and returns the path to the day folder."""
+    if not os.path.exists(data_output_folder_path):
+        os.makedirs(data_output_folder_path)
+
+    bird_folder = os.path.join(data_output_folder_path, bird_name)
+    if not os.path.exists(bird_folder):
+        os.makedirs(bird_folder)
+
+    experiment_folder = os.path.join(bird_folder, experiment_name)
+
+    day_folder = os.path.join(experiment_folder, datetime.datetime.now().strftime("%y%m%d"))
+    if not os.path.exists(day_folder):
+        os.makedirs(day_folder)
+
+    # Create empty file "batch.txt" in day_folder (if it does not exist)
+    batch_path = os.path.join(day_folder, "batch.txt")
+    if not os.path.exists(batch_path):
+        with open(batch_path, 'w') as f:
+            f.write("")
+    return day_folder
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# code starts here for real
+# ---------------------------------------------------------------------------------------------------------------------
 # Set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -186,130 +316,47 @@ else:
     hist_size = None
 
 
-def seconds_to_index(seconds, chunk_size, sample_rate):
-    """Converts seconds to an index based on chunk size and sample rate."""
-    index_size = int((seconds * sample_rate) // chunk_size)
-    return index_size
+# Initialize global variables
+raw_audio_chunks = []
+db_values_list = []
+bout_flag = False
+bout_index2wait = 0
+bout_indexes_waited = 0
+bout_recdt = ""
+onsets = []
+offsets = []
+onset_flag = False
+offset_pending = False
+waited_class_time = 0
+class_flag = False
+pred_syl_list = []
+pred_syl_list_for_playback = []
+wn_recfile_dict = {}
+not_catch_trial_flag = False
+no_classify_flag_wn = False
+no_classify_flag_wn_idx2wait = 0
+missing_y_pred_flag = False
+min_silent_index2wait = 0
+min_silent_waited = True
+
+if realtime_classification:
+    y_pred_list = [0] * hist_size
+    seg_input_size = hist_size
+else:
+    y_pred_list = []
+    seg_input_size = None
 
 
-def index_to_seconds(index, chunk_size, sample_rate):
-    """Converts an index to seconds based on chunk size and sample rate."""
-    seconds = (index * chunk_size) / sample_rate
-    return seconds
+frame_rate, channels, input_chunks = None, None, None
+bandpass_numerator_coeffs, bandpass_denominator_coeffs, zi = None, None, None
 
-
-def calculate_db(waveform):
-    """Calculates the decibel value of a waveform."""
-    rms = np.sqrt(np.mean(waveform ** 2))
-    rms = max(rms, 1e-10)
-    decibel = 20 * np.log10(rms)
-    return decibel
-
-
-''' I (Jacqui) think this function is useless because it never gets called on'''
-
-
-def output_callback(outdata, frames, time_info, status):
-    """Callback function for audio output stream."""
-    global audio_buffer, is_playing_white_noise
-
-    if is_playing_white_noise and len(audio_buffer) >= frames:
-        outdata[:] = audio_buffer[:frames].reshape(-1, 1)
-        audio_buffer = audio_buffer[frames:]
-    else:
-        outdata.fill(0)
-        is_playing_white_noise = False
-
-
-def play_white_noise(duration_ms):
-    """Plays white noise for the specified duration in milliseconds."""
-    global is_playing_white_noise, white_noise_index, white_noise
-    is_playing_white_noise = True
-    white_noise_index = 0
-    white_noise = generate_white_noise(duration_ms, frame_rate)
-
-
-def generate_white_noise(duration_ms, frame_rate, dtype=np.float32):
-    """Generates white noise for the specified duration in milliseconds."""
-    num_samples = int(frame_rate * duration_ms / 1000)
-    return (np.random.randn(num_samples)).astype(dtype)
-
-
-def play_playback_file(key):
-    global is_playing_playback_file, playback_sound_index, playback_sound
-    is_playing_playback_file = True
-    playback_sound, sr = playback_sounds[key]
-    playback_sound_index = 0
-
-
-def apply_butter_bandpass_filter(data, numerator_coeffs, denominator_coeffs, zi):
-    """Applies a Butterworth bandpass filter to the data."""
-    y, zf = lfilter(numerator_coeffs, denominator_coeffs, data, zi=zi)
-    return y, zf
-
-
-def millisecond_to_fixed_notation(ms):
-    """Formats milliseconds to scientific notation string."""
-    coeff, exp = "{:.6E}".format(ms).split("E")
-    exp = str(int(exp))  # removes leading zero
-    return f"{coeff}E{exp}"
-
-
-def clean_lists(lists, n):
-    """Cleans lists by keeping only the last n elements."""
-    for i in range(len(lists)):
-        try:
-            lists[i][:] = lists[i][-n:]
-        except Exception as e:
-            logger.debug(e)
-            continue
-
-
-def butter_bandpass_coeffs(lowcut, highcut, fs, order=5):
-    """Calculates Butterworth bandpass filter coefficients."""
-    nyquist = 0.5 * fs
-    low = lowcut / nyquist
-    high = highcut / nyquist
-    numerator_coeffs, denominator_coeffs = butter(order, [low, high], btype='band')
-    return numerator_coeffs, denominator_coeffs
-
-
-def normalize_spectrogram(spectrogram):
-    """Normalizes the spectrogram by subtracting mean and dividing by standard deviation."""
-    mean = spectrogram.mean()
-    std = spectrogram.std()
-    normalized_spectrogram = (spectrogram - mean) / std if std != 0 else spectrogram
-    return normalized_spectrogram
-
-
-# change the regular expression comparison with the last syllables recorded
-def check_targeted_sequence(lst, targeted_sequence):
-    """Checks if the last elements of lst match the targeted_sequence."""
-    recorded_sequence = ''.join(lst)
-    return re.search(targeted_sequence, recorded_sequence)
-
-
-def daily_initialization(data_output_folder_path, experiment_name, bird_name):
-    """Initializes daily folders and returns the path to the day folder."""
-    if not os.path.exists(data_output_folder_path):
-        os.makedirs(data_output_folder_path)
-
-    bird_folder = os.path.join(data_output_folder_path, bird_name)
-    if not os.path.exists(bird_folder):
-        os.makedirs(bird_folder)
-
-    experiment_folder = os.path.join(bird_folder, experiment_name)
-
-    day_folder = os.path.join(experiment_folder, datetime.datetime.now().strftime("%y%m%d"))
-    if not os.path.exists(day_folder):
-        os.makedirs(day_folder)
-
-    # Create empty file "batch.txt" in day_folder (if it does not exist)
-    batch_path = os.path.join(day_folder, "batch.txt")
-    if not os.path.exists(batch_path):
-        with open(batch_path, 'w') as f:
-            f.write("")
-    return day_folder
+# Global buffer and playback status
+is_playing_white_noise = False
+is_playing_playback_file = False
+white_noise_index = 0
+playback_sound_index = 0
+white_noise = None
+playback_sound = None
 
 
 def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict, onsets, offsets, pred_syl_list):
@@ -426,38 +473,6 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
     logger.info("Notmat file saved!")
 
 
-# Initialize global variables
-raw_audio_chunks = []
-db_values_list = []
-bout_flag = False
-bout_index2wait = 0
-bout_indexes_waited = 0
-bout_recdt = ""
-onsets = []
-offsets = []
-onset_flag = False
-offset_pending = False
-waited_class_time = 0
-class_flag = False
-pred_syl_list = []
-pred_syl_list_for_playback = []
-wn_recfile_dict = {}
-not_catch_trial_flag = False
-no_classify_flag_wn = False
-no_classify_flag_wn_idx2wait = 0
-missing_y_pred_flag = False
-min_silent_index2wait = 0
-min_silent_waited = True
-
-if realtime_classification:
-    y_pred_list = [0] * hist_size
-    seg_input_size = hist_size
-else:
-    y_pred_list = []
-    seg_input_size = None
-offset_pending = False
-
-
 def stream_callback(indata, outdata, frames, time_info, status):
     """Callback function for processing live audio stream."""
     global raw_audio_chunks
@@ -572,7 +587,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
             min_silent_index2wait -= 1
             if min_silent_index2wait <= 0:
                 min_silent_waited = True
-
         if len(targeted_sequence_list) > 1:
             targeted_sequence = np.random.choice(targeted_sequence_list)
         elif len(targeted_sequence_list) == 1:
@@ -585,7 +599,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
     # Determine if classification is allowed
     classification_allowed = realtime_classification and min_silent_waited and not no_classify_flag_wn
 
-    # If bout_flag ise set, wait for "t_after" seconds of silenc
+    # If bout_flag is set, wait for "t_after" seconds of silence
     if bout_flag:
         bout_indexes_waited += 1
         if smoothed_db > bout_threshold_db:
@@ -611,14 +625,14 @@ def stream_callback(indata, outdata, frames, time_info, status):
             n = int(seconds_to_index(t_before, chunk_size, frame_rate))
             onsets = []
             offsets = []
+            pred_syl_list = []
+            pred_syl_list_for_playback = []
             raw_audio_chunks = raw_audio_chunks[-n:]
             bout_indexes_waited = 0
             y_pred_list = y_pred_list[-n:] if realtime_classification else []
             onset_flag = False
             offset_pending = False
             bout_flag = False
-            pred_syl_list = []
-            pred_syl_list_for_playback = []
             min_silent_waited = True
 
         bout_index2wait -= 1
@@ -831,10 +845,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
         outdata.fill(0)
 
 
-frame_rate, channels, input_chunks = None, None, None
-bandpass_numerator_coeffs, bandpass_denominator_coeffs, zi = None, None, None
-
-
 def list_audio_devices():
     """Lists available audio devices."""
     print(sd.query_devices())
@@ -910,15 +920,6 @@ def process_live_audio():
         stream.stop()
         stream.close()
         logger.info("Audio recording stopped")
-
-
-# Global buffer and playback status
-is_playing_white_noise = False
-is_playing_playback_file = False
-white_noise_index = 0
-playback_sound_index = 0
-white_noise = None
-playback_sound = None
 
 
 # Start processing live audio
