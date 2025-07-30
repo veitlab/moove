@@ -145,7 +145,7 @@ def daily_initialization(data_output_folder_path, experiment_name, bird_name):
             f.write("")
     return day_folder
 
-
+log_file_path = "C:/Users/veitr/.moove/onset_times_log1.txt"
 # ---------------------------------------------------------------------------------------------------------------------
 # code starts here for real
 # ---------------------------------------------------------------------------------------------------------------------
@@ -324,6 +324,7 @@ bout_index2wait = 0
 bout_indexes_waited = 0
 bout_recdt = ""
 onsets = []
+onsets_idx = []
 offsets = []
 onset_flag = False
 offset_pending = False
@@ -453,6 +454,10 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
     # Convert predicted syllable list to string
     pred_syl_str = ''.join(map(str, pred_syl_list))
 
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(f"{bout_recdt.strftime("%y%m%d_%H%M%S")}\n")
+        log_file.write(f"Onsets saved = {onsets}\n")
+        log_file.write(f"Offsets saved = {offsets}\n")
     notmat_dict = {
         '__header__': b'MATLAB 5.0 MAT-file, Platform: PCWIN64, Created on: MOOVETAF',
         '__version__': '1.0',
@@ -471,6 +476,7 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
     save_notmat(os.path.join(save_path, file_name.replace(".wav", ".wav.not.mat")), notmat_dict)
 
     logger.info("Notmat file saved!")
+
 
 
 def stream_callback(indata, outdata, frames, time_info, status):
@@ -507,6 +513,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
     global device
     global offset_pending
 
+    # audio stream
     input_channels = channels[0]
 
     if input_channels > 1:
@@ -546,47 +553,46 @@ def stream_callback(indata, outdata, frames, time_info, status):
     # Check threshold and start recording
     if smoothed_db > bout_threshold_db and not bout_flag:
         bout_index2wait = int(seconds_to_index(t_after, chunk_size, frame_rate))
+        # datetime of file start
         recdt = datetime.datetime.now() - datetime.timedelta(seconds=t_before)
         bout_recdt = recdt
         bout_flag = True
         wn_recfile_dict = {}
         missing_y_pred_flag = False
 
+        # chooses if catch trial or not
         if random.random() >= catch_trial_probability:
             not_catch_trial_flag = True
             wn_recfile_dict["catch_song"] = 0
         else:
             not_catch_trial_flag = False
             wn_recfile_dict["catch_song"] = 1
-            # Add catch trial feedback information immediately when bout starts
-            trigger_time = t_before * 1000  # Initial trigger time at bout start
-            formatted_time = millisecond_to_fixed_notation(trigger_time)
-            file_path_catch = "catch_trial_no_playback"
-            template_value_catch = 0
-            wn_recfile_dict[formatted_time] = f"catch # {file_path_catch} : Templ = {template_value_catch}"
-
         logger.info("Not catch trial flag: %s", not_catch_trial_flag)
         logger.info("Threshold triggered")
 
-    # Handle no classification during white noise playback
-    if no_classify_flag_wn:
-        no_classify_flag_wn_idx2wait -= 1
-        if no_classify_flag_wn_idx2wait == 0:
-            no_classify_flag_wn = False
-
-    # Memory cleanup
+    # Memory cleanup (standard: after 60s)
     if len(db_values_list) > (memory_cleanup_interval * frame_rate / chunk_size) and not bout_flag:
         n = int(seconds_to_index(5, chunk_size, frame_rate))
         lists = [raw_audio_chunks, db_values_list, y_pred_list, pred_syl_list]
         clean_lists(lists, n)
         logger.debug("Cleaned list entries")
 
+    # Handle no classification during white noise playback
+    if no_classify_flag_wn:
+        no_classify_flag_wn_idx2wait -= 1 # countdown for no classification, till classification can start again after WN
+        if no_classify_flag_wn_idx2wait == 0:
+            no_classify_flag_wn = False
+
     # Handle min_silent_duration if classification is enabled
     if realtime_classification:
+        # count down the minimum silence between the last offset and the next possible onset
         if not min_silent_waited:
             min_silent_index2wait -= 1
             if min_silent_index2wait <= 0:
                 min_silent_waited = True
+        #TODO: verschieben
+        # chooses the target sequence for the upcoming bout from the target sequence list
+        # if several options then choose one randomly
         if len(targeted_sequence_list) > 1:
             targeted_sequence = np.random.choice(targeted_sequence_list)
         elif len(targeted_sequence_list) == 1:
@@ -624,6 +630,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
             # Clean up lists and variables
             n = int(seconds_to_index(t_before, chunk_size, frame_rate))
             onsets = []
+
             offsets = []
             pred_syl_list = []
             pred_syl_list_for_playback = []
@@ -634,11 +641,11 @@ def stream_callback(indata, outdata, frames, time_info, status):
             offset_pending = False
             bout_flag = False
             min_silent_waited = True
+        bout_index2wait -= 1 #TODO: kann das nicht in die else von dem if davor????
 
-        bout_index2wait -= 1
-
+        first_positive_chunk_index = None #added
         if classification_allowed:
-            # Data preparation for segmentation
+            # Data preparation for segmentation (default seg_input_size = 3, from the model)
             if len(raw_audio_chunks) >= seg_input_size:
                 X = torch.tensor(np.concatenate(raw_audio_chunks[-seg_input_size:])).float().to(device)
                 X = X.unsqueeze(0)
@@ -646,11 +653,18 @@ def stream_callback(indata, outdata, frames, time_info, status):
                 y = seg_model(X)
                 y = torch.sigmoid(y)
 
+                # y_pred is list of datapoints classified as segment or not (default: [0,0,0,1,1,1 ...])
                 y_pred = torch.where(y > decision_threshold, torch.tensor(1.0, device=device),
                                      torch.tensor(0.0, device=device))
+                y_pred_value = int(y_pred.item()) #added
                 y_pred_list.append(int(y_pred.item()))
-
-                # Onset detection
+                # Merke dir den Index, an dem das erste Mal 1 vorhergesagt wurde
+                if y_pred_value == 1 and first_positive_chunk_index is None:
+                    first_positive_chunk_index = len(y_pred_list) - 1
+                    with open(log_file_path, 'a') as f:
+                        f.write(f"Erster positiver Chunk erkannt bei Index: {first_positive_chunk_index}\n")
+                # Onset detection, looks for the last (default 5, onset_window_size) points in the y_pred_list
+                # if more than (default 3, n_onset_true) are 1
                 sub_y = y_pred_list[-onset_window_size:]
                 count = sub_y.count(1)
                 if not onset_flag and count >= n_onset_true:
@@ -659,9 +673,18 @@ def stream_callback(indata, outdata, frames, time_info, status):
                         idx_10 = sub_y_rev.index(0)
                     except ValueError:
                         idx_10 = 0
+                    # TODO: falscher onset wird berechnet und wir wissen nicht warum
                     onset_time = ((index_to_seconds(bout_indexes_waited - idx_10, chunk_size, frame_rate)) * 1000) + (
                                 t_before * 1000)
+                    onset_idx = bout_indexes_waited - idx_10 + t_before*1000*44100
+                    with open(log_file_path, 'a') as f:
+                        f.write("NEW SYL\n")
+                        f.write(f"Bout indexdes waited: {bout_indexes_waited}...\n")
+                        f.write(f"Index 10: {idx_10}...\n")
+                        f.write(f"Calculated onset_time: {onset_time} ms\n")
+                        f.write(f"Calculated onset_idx: {onset_idx} ms\n")
                     onsets.append(onset_time)
+                    onsets_idx.append(onset_idx)
                     onset_flag = True
                     class_flag = True
                     waited_class_time = input_chunks - idx_10
@@ -684,7 +707,8 @@ def stream_callback(indata, outdata, frames, time_info, status):
                         min_silent_index2wait = int(seconds_to_index(min_silent_duration, chunk_size, frame_rate))
                         min_silent_waited = False
                         logger.debug("min_silent_index2wait: %s", min_silent_index2wait)
-
+                        with open(log_file_path, 'a') as f:
+                            f.write(f" offset time: {offset_time} ms\n")
                         last_duration = offsets[-1] - onsets[-1]
                         len_offset = len(offsets)
                         len_ypred = len(pred_syl_list)
@@ -706,6 +730,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
 
                 # Classification
                 if class_flag:
+                    # 30ms wait time since onset of syllable for classification
                     waited_class_time -= 1
                     if waited_class_time == 0:
                         class_flag = False
@@ -739,9 +764,12 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                                                              targeted_sequence):
                                 trigger_time = index_to_seconds(bout_indexes_waited, chunk_size, frame_rate) * 1000 + (
                                             t_before * 1000)
+                                with open(log_file_path, 'a') as f:
+                                    f.write(f"trigger time = {trigger_time}\n")
                                 formatted_time = millisecond_to_fixed_notation(trigger_time)
 
-                                # Only handle non-catch trials here (catch trials already have feedback)
+                                # not_catch trial: choose feedback and put time in rec file,
+                                # catch trial: writes theortical playback time into rec file
                                 if not_catch_trial_flag:
                                     if computer_generated_white_noise:
                                         # playback of computer generated white noise
@@ -767,7 +795,11 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                     # I (JG) think this is so that classification isn't going on during playback
                                     no_classify_flag_wn_idx2wait = int(
                                         seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
-                                # For catch trials, do nothing here as feedback is already recorded at bout start
+                                # writes theortical playback time into rec file
+                                elif not not_catch_trial_flag:
+                                    template_value_catch = 0  # Adjust as necessary
+                                    wn_recfile_dict[formatted_time] = f"catch # catch_file.wav : Templ = {template_value_catch}"
+
                         # After classification, check if an offset is pending
                         if offset_pending:
                             sub_y_long_rev = y_pred_list[::-1]
@@ -777,6 +809,9 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                 idx = 0
                             offset_time = ((index_to_seconds(bout_indexes_waited - idx, chunk_size,
                                                              frame_rate)) * 1000) + (t_before * 1000)
+
+                            with open(log_file_path, 'a') as f:
+                                f.write(f"2nd offset time: {offset_time} ms\n")
                             offsets.append(offset_time)
                             min_silent_index2wait = int(seconds_to_index(min_silent_duration, chunk_size, frame_rate))
                             min_silent_waited = False
@@ -785,8 +820,8 @@ def stream_callback(indata, outdata, frames, time_info, status):
                             last_duration = offsets[-1] - onsets[-1]
                             len_offset = len(offsets)
                             len_ypred = len(pred_syl_list)
+                            # Remove the last onset, offset, and corresponding pred_syl_list entry if syllable to short
                             if last_duration < (min_syllable_length * 1000):
-                                # Remove the last onset, offset, and corresponding pred_syl_list entry
                                 onsets.pop()
                                 offsets.pop()
                                 if len_ypred == len_offset:
