@@ -40,6 +40,7 @@ classification_model_name = bird_x_example_class_model.pth
 targeted_sequence = [jc]a$
 catch_trial_probability = 0.1
 white_noise_duration = 0.08
+computer_generated_white_noise = False
 playback_dir = ~/.moove/playbacks/white_noise/
 trigger_time_offset = 0.005
 
