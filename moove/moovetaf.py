@@ -19,136 +19,6 @@ from pathlib import Path
 from moove.utils.movefuncs_utils import save_notmat
 from moove import templates
 
-
-def seconds_to_index(seconds, chunk_size, sample_rate):
-    """Converts seconds to an index based on chunk size and sample rate."""
-    index_size = int((seconds * sample_rate) // chunk_size)
-    return index_size
-
-
-def index_to_seconds(index, chunk_size, sample_rate):
-    """Converts an index to seconds based on chunk size and sample rate."""
-    seconds = (index * chunk_size) / sample_rate
-    return seconds
-
-
-def calculate_db(waveform):
-    """Calculates the decibel value of a waveform."""
-    rms = np.sqrt(np.mean(waveform ** 2))
-    rms = max(rms, 1e-10)
-    decibel = 20 * np.log10(rms)
-    return decibel
-
-
-''' I (Jacqui) think this function is useless because it never gets called on'''
-
-
-def output_callback(outdata, frames, time_info, status):
-    """Callback function for audio output stream."""
-    global audio_buffer, is_playing_white_noise
-
-    if is_playing_white_noise and len(audio_buffer) >= frames:
-        outdata[:] = audio_buffer[:frames].reshape(-1, 1)
-        audio_buffer = audio_buffer[frames:]
-    else:
-        outdata.fill(0)
-        is_playing_white_noise = False
-
-
-def play_white_noise(duration_ms):
-    """Plays white noise for the specified duration in milliseconds."""
-    global is_playing_white_noise, white_noise_index, white_noise
-    is_playing_white_noise = True
-    white_noise_index = 0
-    white_noise = generate_white_noise(duration_ms, frame_rate)
-
-
-def generate_white_noise(duration_ms, frame_rate, dtype=np.float32):
-    """Generates white noise for the specified duration in milliseconds."""
-    num_samples = int(frame_rate * duration_ms / 1000)
-    return (np.random.randn(num_samples)).astype(dtype)
-
-
-def play_playback_file(key):
-    global is_playing_playback_file, playback_sound_index, playback_sound
-    is_playing_playback_file = True
-    playback_sound, sr = playback_sounds[key]
-    playback_sound_index = 0
-
-
-def apply_butter_bandpass_filter(data, numerator_coeffs, denominator_coeffs, zi):
-    """Applies a Butterworth bandpass filter to the data."""
-    y, zf = lfilter(numerator_coeffs, denominator_coeffs, data, zi=zi)
-    return y, zf
-
-
-def millisecond_to_fixed_notation(ms):
-    """Formats milliseconds to scientific notation string."""
-    coeff, exp = "{:.6E}".format(ms).split("E")
-    exp = str(int(exp))  # removes leading zero
-    return f"{coeff}E{exp}"
-
-
-def clean_lists(lists, n):
-    """Cleans lists by keeping only the last n elements."""
-    for i in range(len(lists)):
-        try:
-            lists[i][:] = lists[i][-n:]
-        except Exception as e:
-            logger.debug(e)
-            continue
-
-
-def butter_bandpass_coeffs(lowcut, highcut, fs, order=5):
-    """Calculates Butterworth bandpass filter coefficients."""
-    nyquist = 0.5 * fs
-    low = lowcut / nyquist
-    high = highcut / nyquist
-    numerator_coeffs, denominator_coeffs = butter(order, [low, high], btype='band')
-    return numerator_coeffs, denominator_coeffs
-
-
-def normalize_spectrogram(spectrogram):
-    """Normalizes the spectrogram by subtracting mean and dividing by standard deviation."""
-    mean = spectrogram.mean()
-    std = spectrogram.std()
-    normalized_spectrogram = (spectrogram - mean) / std if std != 0 else spectrogram
-    return normalized_spectrogram
-
-
-# change the regular expression comparison with the last syllables recorded
-def check_targeted_sequence(lst, targeted_sequence):
-    """Checks if the last elements of lst match the targeted_sequence."""
-    recorded_sequence = ''.join(lst)
-    return re.search(targeted_sequence, recorded_sequence)
-
-
-def daily_initialization(data_output_folder_path, experiment_name, bird_name):
-    """Initializes daily folders and returns the path to the day folder."""
-    if not os.path.exists(data_output_folder_path):
-        os.makedirs(data_output_folder_path)
-
-    bird_folder = os.path.join(data_output_folder_path, bird_name)
-    if not os.path.exists(bird_folder):
-        os.makedirs(bird_folder)
-
-    experiment_folder = os.path.join(bird_folder, experiment_name)
-
-    day_folder = os.path.join(experiment_folder, datetime.datetime.now().strftime("%y%m%d"))
-    if not os.path.exists(day_folder):
-        os.makedirs(day_folder)
-
-    # Create empty file "batch.txt" in day_folder (if it does not exist)
-    batch_path = os.path.join(day_folder, "batch.txt")
-    if not os.path.exists(batch_path):
-        with open(batch_path, 'w') as f:
-            f.write("")
-    return day_folder
-
-log_file_path = "C:/Users/veitr/.moove/onset_times_log1.txt"
-# ---------------------------------------------------------------------------------------------------------------------
-# code starts here for real
-# ---------------------------------------------------------------------------------------------------------------------
 # Set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -181,37 +51,28 @@ global_dir = os.path.expanduser(global_dir)
 os.makedirs(os.path.join(global_dir, "rec_data"), exist_ok=True)
 os.makedirs(os.path.join(global_dir, "playbacks"), exist_ok=True)
 
-# Variables needed regardless of realtime_classification
-# mooeve_config readout
-# section TAF
 bird_name = config.get('TAF', 'bird_name')
 experiment_name = config.get('TAF', 'experiment_name')
 frame_rate = int(config.get('TAF', 'frame_rate'))
-chunk_size = int(config.get('TAF', 'chunk_size'))
 t_before = float(config.get('TAF', 't_before'))  # Already in seconds
 t_after = float(config.get('TAF', 't_after'))  # Already in seconds
 min_bout_duration = float(config.get('TAF', 'min_bout_duration'))
 memory_cleanup_interval = int(config.get('TAF', 'memory_cleanup_interval'))
-config_input_channels = int(config.get('TAF', 'input_channels'))
 
-# section bird
+realtime_classification = config.getboolean(bird_name, 'realtime_classification')
 data_output_folder_path = os.path.join(global_dir, 'rec_data')
-# trained_models
+
+# Variables needed regardless of realtime_classification
+chunk_size = int(config.get('TAF', 'chunk_size'))
 bout_threshold_db = int(config.get(bird_name, 'bout_threshold_db'))
 window_size = int(config.get(bird_name, 'window_size'))
 bandpass_lowcut = int(config.get(bird_name, 'bandpass_lowcut'))
 bandpass_highcut = int(config.get(bird_name, 'bandpass_highcut'))
 bandpass_order = int(config.get(bird_name, 'bandpass_order'))
-
-# bout detection (threshold parameters)
-realtime_classification = config.getboolean(bird_name, 'realtime_classification')
-
-# white noise
-catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 white_noise_duration = float(config.get(bird_name, 'white_noise_duration'))
 trigger_time_offset = float(config.get(bird_name, 'trigger_time_offset'))
+catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 
-# sliding interval algorithm for segmentation network
 min_silent_duration = float(config.get(bird_name, 'min_silent_duration'))
 min_syllable_length = float(config.get(bird_name, 'min_syllable_length'))
 
@@ -316,48 +177,115 @@ else:
     hist_size = None
 
 
-# Initialize global variables
-raw_audio_chunks = []
-db_values_list = []
-bout_flag = False
-bout_index2wait = 0
-bout_indexes_waited = 0
-bout_recdt = ""
-onsets = []
-onsets_idx = []
-offsets = []
-onset_flag = False
-offset_pending = False
-waited_class_time = 0
-class_flag = False
-pred_syl_list = []
-pred_syl_list_for_playback = []
-wn_recfile_dict = {}
-not_catch_trial_flag = False
-no_classify_flag_wn = False
-no_classify_flag_wn_idx2wait = 0
-missing_y_pred_flag = False
-min_silent_index2wait = 0
-min_silent_waited = True
-
-if realtime_classification:
-    y_pred_list = [0] * hist_size
-    seg_input_size = hist_size
-else:
-    y_pred_list = []
-    seg_input_size = None
+def seconds_to_index(seconds, chunk_size, sample_rate):
+    """Converts seconds to an index based on chunk size and sample rate."""
+    index_size = int((seconds * sample_rate) // chunk_size)
+    return index_size
 
 
-frame_rate, channels, input_chunks = None, None, None
-bandpass_numerator_coeffs, bandpass_denominator_coeffs, zi = None, None, None
+def index_to_seconds(index, chunk_size, sample_rate):
+    """Converts an index to seconds based on chunk size and sample rate."""
+    seconds = (index * chunk_size) / sample_rate
+    return seconds
 
-# Global buffer and playback status
-is_playing_white_noise = False
-is_playing_playback_file = False
-white_noise_index = 0
-playback_sound_index = 0
-white_noise = None
-playback_sound = None
+
+def calculate_db(waveform):
+    """Calculates the decibel value of a waveform."""
+    rms = np.sqrt(np.mean(waveform ** 2))
+    rms = max(rms, 1e-10)
+    decibel = 20 * np.log10(rms)
+    return decibel
+
+
+def play_white_noise(duration_ms):
+    """Plays white noise for the specified duration in milliseconds."""
+    global is_playing_white_noise, white_noise_index, white_noise
+    is_playing_white_noise = True
+    white_noise_index = 0
+    white_noise = generate_white_noise(duration_ms, frame_rate)
+
+
+def generate_white_noise(duration_ms, frame_rate, dtype=np.float32):
+    """Generates white noise for the specified duration in milliseconds."""
+    num_samples = int(frame_rate * duration_ms / 1000)
+    return (np.random.randn(num_samples)).astype(dtype)
+
+
+def play_playback_file(key):
+    global is_playing_playback_file, playback_sound_index, playback_sound
+    is_playing_playback_file = True
+    playback_sound, sr = playback_sounds[key]
+    playback_sound_index = 0
+
+
+def apply_butter_bandpass_filter(data, numerator_coeffs, denominator_coeffs, zi):
+    """Applies a Butterworth bandpass filter to the data."""
+    y, zf = lfilter(numerator_coeffs, denominator_coeffs, data, zi=zi)
+    return y, zf
+
+
+def millisecond_to_fixed_notation(ms):
+    """Formats milliseconds to scientific notation string."""
+    coeff, exp = "{:.6E}".format(ms).split("E")
+    exp = str(int(exp))  # removes leading zero
+    return f"{coeff}E{exp}"
+
+
+def clean_lists(lists, n):
+    """Cleans lists by keeping only the last n elements."""
+    for i in range(len(lists)):
+        try:
+            lists[i][:] = lists[i][-n:]
+        except Exception as e:
+            logger.debug(e)
+            continue
+
+
+def butter_bandpass_coeffs(lowcut, highcut, fs, order=5):
+    """Calculates Butterworth bandpass filter coefficients."""
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    numerator_coeffs, denominator_coeffs = butter(order, [low, high], btype='band')
+    return numerator_coeffs, denominator_coeffs
+
+
+def normalize_spectrogram(spectrogram):
+    """Normalizes the spectrogram by subtracting mean and dividing by standard deviation."""
+    mean = spectrogram.mean()
+    std = spectrogram.std()
+    normalized_spectrogram = (spectrogram - mean) / std if std != 0 else spectrogram
+    return normalized_spectrogram
+
+
+# change the regular expression comparison with the last syllables recorded
+def check_targeted_sequence(lst, targeted_sequence):
+    """Checks if the last elements of lst match the targeted_sequence."""
+    recorded_sequence = ''.join(lst)
+    return re.search(targeted_sequence, recorded_sequence)
+
+
+def daily_initialization(data_output_folder_path, experiment_name, bird_name):
+    """Initializes daily folders and returns the path to the day folder."""
+    if not os.path.exists(data_output_folder_path):
+        os.makedirs(data_output_folder_path)
+
+    bird_folder = os.path.join(data_output_folder_path, bird_name)
+    if not os.path.exists(bird_folder):
+        os.makedirs(bird_folder)
+
+    experiment_folder = os.path.join(bird_folder, experiment_name)
+
+    day_folder = os.path.join(experiment_folder, datetime.datetime.now().strftime("%y%m%d"))
+    if not os.path.exists(day_folder):
+        os.makedirs(day_folder)
+
+    # Create empty file "batch" in day_folder (if it does not exist)
+    batch_path = os.path.join(day_folder, "batch")
+    if not os.path.exists(batch_path):
+        with open(batch_path, 'w') as f:
+            f.write("")
+    return day_folder
 
 
 def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict, onsets, offsets, pred_syl_list):
@@ -383,7 +311,7 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
         logger.info("Not enough data to save")
         return
 
-    batch_path = os.path.join(save_path, "batch.txt")
+    batch_path = os.path.join(save_path, "batch")
 
     with open(batch_path, "r") as file:
         lines = file.readlines()
@@ -454,10 +382,6 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
     # Convert predicted syllable list to string
     pred_syl_str = ''.join(map(str, pred_syl_list))
 
-    with open(log_file_path, 'a') as log_file:
-        log_file.write(f"{bout_recdt.strftime("%y%m%d_%H%M%S")}\n")
-        log_file.write(f"Onsets saved = {onsets}\n")
-        log_file.write(f"Offsets saved = {offsets}\n")
     notmat_dict = {
         '__header__': b'MATLAB 5.0 MAT-file, Platform: PCWIN64, Created on: MOOVETAF',
         '__version__': '1.0',
@@ -477,6 +401,37 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
 
     logger.info("Notmat file saved!")
 
+
+# Initialize global variables
+raw_audio_chunks = []
+db_values_list = []
+bout_flag = False
+bout_index2wait = 0
+bout_indexes_waited = 0
+bout_recdt = ""
+onsets = []
+offsets = []
+onset_flag = False
+offset_pending = False
+waited_class_time = 0
+class_flag = False
+pred_syl_list = []
+pred_syl_list_for_playback = []
+wn_recfile_dict = {}
+not_catch_trial_flag = False
+no_classify_flag_wn = False
+no_classify_flag_wn_idx2wait = 0
+missing_y_pred_flag = False
+min_silent_index2wait = 0
+min_silent_waited = True
+
+if realtime_classification:
+    y_pred_list = [0] * hist_size
+    seg_input_size = hist_size
+else:
+    y_pred_list = []
+    seg_input_size = None
+offset_pending = False
 
 
 def stream_callback(indata, outdata, frames, time_info, status):
@@ -513,7 +468,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
     global device
     global offset_pending
 
-    # audio stream
     input_channels = channels[0]
 
     if input_channels > 1:
@@ -553,48 +507,50 @@ def stream_callback(indata, outdata, frames, time_info, status):
     # Check threshold and start recording
     if smoothed_db > bout_threshold_db and not bout_flag:
         bout_index2wait = int(seconds_to_index(t_after, chunk_size, frame_rate))
-        # datetime of file start
         recdt = datetime.datetime.now() - datetime.timedelta(seconds=t_before)
         bout_recdt = recdt
         bout_flag = True
         wn_recfile_dict = {}
         missing_y_pred_flag = False
 
-        # chooses if catch trial or not
         if random.random() >= catch_trial_probability:
             not_catch_trial_flag = True
             wn_recfile_dict["catch_song"] = 0
         else:
             not_catch_trial_flag = False
             wn_recfile_dict["catch_song"] = 1
+            # Add catch trial feedback information immediately when bout starts
+            trigger_time = t_before * 1000  # Initial trigger time at bout start
+            formatted_time = millisecond_to_fixed_notation(trigger_time)
+            file_path_catch = "catch_trial_no_playback"
+            template_value_catch = 0
+            wn_recfile_dict[formatted_time] = f"catch # {file_path_catch} : Templ = {template_value_catch}"
+
         logger.info("Not catch trial flag: %s", not_catch_trial_flag)
         logger.info("Threshold triggered")
 
-    # Memory cleanup (standard: after 60s)
+    # Handle no classification during white noise playback
+    if no_classify_flag_wn:
+        no_classify_flag_wn_idx2wait -= 1
+        if no_classify_flag_wn_idx2wait == 0:
+            no_classify_flag_wn = False
+
+    # Memory cleanup
     if len(db_values_list) > (memory_cleanup_interval * frame_rate / chunk_size) and not bout_flag:
         n = int(seconds_to_index(5, chunk_size, frame_rate))
         lists = [raw_audio_chunks, db_values_list, y_pred_list, pred_syl_list]
         clean_lists(lists, n)
         logger.debug("Cleaned list entries")
 
-    # Handle no classification during white noise playback
-    if no_classify_flag_wn:
-        no_classify_flag_wn_idx2wait -= 1 # countdown for no classification, till classification can start again after WN
-        if no_classify_flag_wn_idx2wait == 0:
-            no_classify_flag_wn = False
-
     # Handle min_silent_duration if classification is enabled
     if realtime_classification:
-        # count down the minimum silence between the last offset and the next possible onset
         if not min_silent_waited:
             min_silent_index2wait -= 1
             if min_silent_index2wait <= 0:
                 min_silent_waited = True
-        #TODO: verschieben
-        # chooses the target sequence for the upcoming bout from the target sequence list
-        # if several options then choose one randomly
+
         if len(targeted_sequence_list) > 1:
-            targeted_sequence = np.random.choice(targeted_sequence_list)
+            targeted_sequence = np.random.choise(targeted_sequence_list)
         elif len(targeted_sequence_list) == 1:
             targeted_sequence = targeted_sequence_list[0]
         elif targeted_sequence_list == None:
@@ -605,7 +561,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
     # Determine if classification is allowed
     classification_allowed = realtime_classification and min_silent_waited and not no_classify_flag_wn
 
-    # If bout_flag is set, wait for "t_after" seconds of silence
+    # If bout_flag ise set, wait for "t_after" seconds of silenc
     if bout_flag:
         bout_indexes_waited += 1
         if smoothed_db > bout_threshold_db:
@@ -630,22 +586,21 @@ def stream_callback(indata, outdata, frames, time_info, status):
             # Clean up lists and variables
             n = int(seconds_to_index(t_before, chunk_size, frame_rate))
             onsets = []
-
             offsets = []
-            pred_syl_list = []
-            pred_syl_list_for_playback = []
             raw_audio_chunks = raw_audio_chunks[-n:]
             bout_indexes_waited = 0
             y_pred_list = y_pred_list[-n:] if realtime_classification else []
             onset_flag = False
             offset_pending = False
             bout_flag = False
+            pred_syl_list = []
+            pred_syl_list_for_playback = []
             min_silent_waited = True
-        bout_index2wait -= 1 #TODO: kann das nicht in die else von dem if davor????
 
-        first_positive_chunk_index = None #added
+        bout_index2wait -= 1
+
         if classification_allowed:
-            # Data preparation for segmentation (default seg_input_size = 3, from the model)
+            # Data preparation for segmentation
             if len(raw_audio_chunks) >= seg_input_size:
                 X = torch.tensor(np.concatenate(raw_audio_chunks[-seg_input_size:])).float().to(device)
                 X = X.unsqueeze(0)
@@ -653,18 +608,11 @@ def stream_callback(indata, outdata, frames, time_info, status):
                 y = seg_model(X)
                 y = torch.sigmoid(y)
 
-                # y_pred is list of datapoints classified as segment or not (default: [0,0,0,1,1,1 ...])
                 y_pred = torch.where(y > decision_threshold, torch.tensor(1.0, device=device),
                                      torch.tensor(0.0, device=device))
-                y_pred_value = int(y_pred.item()) #added
                 y_pred_list.append(int(y_pred.item()))
-                # Merke dir den Index, an dem das erste Mal 1 vorhergesagt wurde
-                if y_pred_value == 1 and first_positive_chunk_index is None:
-                    first_positive_chunk_index = len(y_pred_list) - 1
-                    with open(log_file_path, 'a') as f:
-                        f.write(f"Erster positiver Chunk erkannt bei Index: {first_positive_chunk_index}\n")
-                # Onset detection, looks for the last (default 5, onset_window_size) points in the y_pred_list
-                # if more than (default 3, n_onset_true) are 1
+
+                # Onset detection
                 sub_y = y_pred_list[-onset_window_size:]
                 count = sub_y.count(1)
                 if not onset_flag and count >= n_onset_true:
@@ -673,18 +621,9 @@ def stream_callback(indata, outdata, frames, time_info, status):
                         idx_10 = sub_y_rev.index(0)
                     except ValueError:
                         idx_10 = 0
-                    # TODO: falscher onset wird berechnet und wir wissen nicht warum
                     onset_time = ((index_to_seconds(bout_indexes_waited - idx_10, chunk_size, frame_rate)) * 1000) + (
                                 t_before * 1000)
-                    onset_idx = bout_indexes_waited - idx_10 + t_before*1000*44100
-                    with open(log_file_path, 'a') as f:
-                        f.write("NEW SYL\n")
-                        f.write(f"Bout indexdes waited: {bout_indexes_waited}...\n")
-                        f.write(f"Index 10: {idx_10}...\n")
-                        f.write(f"Calculated onset_time: {onset_time} ms\n")
-                        f.write(f"Calculated onset_idx: {onset_idx} ms\n")
                     onsets.append(onset_time)
-                    onsets_idx.append(onset_idx)
                     onset_flag = True
                     class_flag = True
                     waited_class_time = input_chunks - idx_10
@@ -707,8 +646,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                         min_silent_index2wait = int(seconds_to_index(min_silent_duration, chunk_size, frame_rate))
                         min_silent_waited = False
                         logger.debug("min_silent_index2wait: %s", min_silent_index2wait)
-                        with open(log_file_path, 'a') as f:
-                            f.write(f" offset time: {offset_time} ms\n")
+
                         last_duration = offsets[-1] - onsets[-1]
                         len_offset = len(offsets)
                         len_ypred = len(pred_syl_list)
@@ -730,7 +668,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
 
                 # Classification
                 if class_flag:
-                    # 30ms wait time since onset of syllable for classification
                     waited_class_time -= 1
                     if waited_class_time == 0:
                         class_flag = False
@@ -764,12 +701,9 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                                                              targeted_sequence):
                                 trigger_time = index_to_seconds(bout_indexes_waited, chunk_size, frame_rate) * 1000 + (
                                             t_before * 1000)
-                                with open(log_file_path, 'a') as f:
-                                    f.write(f"trigger time = {trigger_time}\n")
                                 formatted_time = millisecond_to_fixed_notation(trigger_time)
 
-                                # not_catch trial: choose feedback and put time in rec file,
-                                # catch trial: writes theortical playback time into rec file
+                                # Only handle non-catch trials here (catch trials already have feedback)
                                 if not_catch_trial_flag:
                                     if computer_generated_white_noise:
                                         # playback of computer generated white noise
@@ -795,11 +729,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                     # I (JG) think this is so that classification isn't going on during playback
                                     no_classify_flag_wn_idx2wait = int(
                                         seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
-                                # writes theortical playback time into rec file
-                                elif not not_catch_trial_flag:
-                                    template_value_catch = 0  # Adjust as necessary
-                                    wn_recfile_dict[formatted_time] = f"catch # catch_file.wav : Templ = {template_value_catch}"
-
+                                # For catch trials, do nothing here as feedback is already recorded at bout start
                         # After classification, check if an offset is pending
                         if offset_pending:
                             sub_y_long_rev = y_pred_list[::-1]
@@ -809,9 +739,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                 idx = 0
                             offset_time = ((index_to_seconds(bout_indexes_waited - idx, chunk_size,
                                                              frame_rate)) * 1000) + (t_before * 1000)
-
-                            with open(log_file_path, 'a') as f:
-                                f.write(f"2nd offset time: {offset_time} ms\n")
                             offsets.append(offset_time)
                             min_silent_index2wait = int(seconds_to_index(min_silent_duration, chunk_size, frame_rate))
                             min_silent_waited = False
@@ -820,8 +747,8 @@ def stream_callback(indata, outdata, frames, time_info, status):
                             last_duration = offsets[-1] - onsets[-1]
                             len_offset = len(offsets)
                             len_ypred = len(pred_syl_list)
-                            # Remove the last onset, offset, and corresponding pred_syl_list entry if syllable to short
                             if last_duration < (min_syllable_length * 1000):
+                                # Remove the last onset, offset, and corresponding pred_syl_list entry
                                 onsets.pop()
                                 offsets.pop()
                                 if len_ypred == len_offset:
@@ -878,6 +805,10 @@ def stream_callback(indata, outdata, frames, time_info, status):
             playback_sound_index = 0
     else:
         outdata.fill(0)
+
+
+frame_rate, channels, input_chunks = None, None, None
+bandpass_numerator_coeffs, bandpass_denominator_coeffs, zi = None, None, None
 
 
 def list_audio_devices():
@@ -955,6 +886,15 @@ def process_live_audio():
         stream.stop()
         stream.close()
         logger.info("Audio recording stopped")
+
+
+# Global buffer and playback status
+is_playing_white_noise = False
+is_playing_playback_file = False
+white_noise_index = 0
+playback_sound_index = 0
+white_noise = None
+playback_sound = None
 
 
 # Start processing live audio
