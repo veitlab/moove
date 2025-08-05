@@ -103,7 +103,7 @@ if realtime_classification:
     # target string is read in as the regular expression
     targeted_sequence_str = config.get(bird_name, 'targeted_sequence')
     if targeted_sequence_str.lower() != 'none':
-        targeted_sequence_list = re.findall(r'\b[a-zA-Z0-9]+\$', targeted_sequence_str)
+        targeted_sequence_list = [snippet.strip() for snippet in targeted_sequence_str.split(',')]
     else:
         targeted_sequence_list = None
 
