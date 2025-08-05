@@ -366,18 +366,18 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
         trig time  = {{ trig_time }} ms
         rec end = {{ rec_end }} ms
 
-    ADFREQ = {{ adfreq }}
-    Chans = {{ chans }}
-    Samples = {{ samples }}
-    Catch Song = {{ catch_song }}
-    Hand Segmented = {{ hand_segmented }}
-    Hand Classified = {{ hand_classified }}
-    T Before = {{ t_before }}
-    T After = {{ t_after }}
-    Feedback information:
-    {% for info in feedback_info %}
-    {{ info[0] }} msec: {{ info[1] }}
-    {% endfor %}
+ADFREQ = {{ adfreq }}
+Chans = {{ chans }}
+Samples = {{ samples }}
+Catch Song = {{ catch_song }}
+Hand Segmented = {{ hand_segmented }}
+Hand Classified = {{ hand_classified }}
+T Before = {{ t_before }}
+T After = {{ t_after }}
+Feedback information:
+{% for info in feedback_info %}
+{{ info[0] }} msec: {{ info[1] }}
+{% endfor %}
     """
 
     template = Template(template_string)
