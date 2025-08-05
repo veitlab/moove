@@ -76,12 +76,15 @@ def update(app_state):
         create_batch_file(os.path.join(app_state.data_dir))
     for batch in batch_files:
         batch_path = os.path.join(app_state.data_dir, batch)
-            
-        with open(batch_path, 'r') as f:
-            keep_files = f.read().splitlines()
-        filtered_files = [f for f in keep_files if f in valid_files]
-        with open(batch_path, 'w') as f:
-            f.write('\n'.join(filtered_files))
+        if batch == 'batch.txt':
+            with open(batch_path, 'w') as f:
+                f.write('\n'.join(valid_files))
+        else:
+            with open(batch_path, 'r') as batch_open:
+                keep_files = batch_open.read().splitlines()
+            filtered_files = [f for f in keep_files if f in valid_files]
+            with open(batch_path, 'w') as f:
+                f.write('\n'.join(filtered_files))
         
     app_state.logger.info(f"Batch files have been updated.")
 
