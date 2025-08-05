@@ -51,28 +51,37 @@ global_dir = os.path.expanduser(global_dir)
 os.makedirs(os.path.join(global_dir, "rec_data"), exist_ok=True)
 os.makedirs(os.path.join(global_dir, "playbacks"), exist_ok=True)
 
+# Variables needed regardless of realtime_classification
+# mooeve_config readout
+# section TAF
 bird_name = config.get('TAF', 'bird_name')
 experiment_name = config.get('TAF', 'experiment_name')
 frame_rate = int(config.get('TAF', 'frame_rate'))
+chunk_size = int(config.get('TAF', 'chunk_size'))
 t_before = float(config.get('TAF', 't_before'))  # Already in seconds
 t_after = float(config.get('TAF', 't_after'))  # Already in seconds
 min_bout_duration = float(config.get('TAF', 'min_bout_duration'))
 memory_cleanup_interval = int(config.get('TAF', 'memory_cleanup_interval'))
+config_input_channels = int(config.get('TAF', 'input_channels'))
 
-realtime_classification = config.getboolean(bird_name, 'realtime_classification')
+# section bird
 data_output_folder_path = os.path.join(global_dir, 'rec_data')
-
-# Variables needed regardless of realtime_classification
-chunk_size = int(config.get('TAF', 'chunk_size'))
+# trained_models
 bout_threshold_db = int(config.get(bird_name, 'bout_threshold_db'))
 window_size = int(config.get(bird_name, 'window_size'))
 bandpass_lowcut = int(config.get(bird_name, 'bandpass_lowcut'))
 bandpass_highcut = int(config.get(bird_name, 'bandpass_highcut'))
 bandpass_order = int(config.get(bird_name, 'bandpass_order'))
+
+# bout detection (threshold parameters)
+realtime_classification = config.getboolean(bird_name, 'realtime_classification')
+
+# white noise
+catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 white_noise_duration = float(config.get(bird_name, 'white_noise_duration'))
 trigger_time_offset = float(config.get(bird_name, 'trigger_time_offset'))
-catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 
+# sliding interval algorithm for segmentation network
 min_silent_duration = float(config.get(bird_name, 'min_silent_duration'))
 min_syllable_length = float(config.get(bird_name, 'min_syllable_length'))
 
@@ -280,8 +289,8 @@ def daily_initialization(data_output_folder_path, experiment_name, bird_name):
     if not os.path.exists(day_folder):
         os.makedirs(day_folder)
 
-    # Create empty file "batch" in day_folder (if it does not exist)
-    batch_path = os.path.join(day_folder, "batch")
+    # Create empty file "batch.txt" in day_folder (if it does not exist)
+    batch_path = os.path.join(day_folder, "batch.txt")
     if not os.path.exists(batch_path):
         with open(batch_path, 'w') as f:
             f.write("")
@@ -311,7 +320,7 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
         logger.info("Not enough data to save")
         return
 
-    batch_path = os.path.join(save_path, "batch")
+    batch_path = os.path.join(save_path, "batch.txt")
 
     with open(batch_path, "r") as file:
         lines = file.readlines()
