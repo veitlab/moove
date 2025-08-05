@@ -461,9 +461,9 @@ app_state.batch_combobox.set(app_state.current_batch_file)  # open previous used
 classified_var = tk.StringVar(value="0")
 segmented_var = tk.StringVar(value="0")
 
-classified_checkbox = ttk.Checkbutton(top_frame, text="Classified?  ", variable=app_state.classified_var, onvalue="1",
+classified_checkbox = ttk.Checkbutton(top_frame, text="Classified  ", variable=app_state.classified_var, onvalue="1",
                                       offvalue="0")  # space next to text is for padding
-segmented_checkbox = ttk.Checkbutton(top_frame, text="Segmented?  ", variable=app_state.segmented_var, onvalue="1",
+segmented_checkbox = ttk.Checkbutton(top_frame, text="Segmented  ", variable=app_state.segmented_var, onvalue="1",
                                      offvalue="0")  # space next to text is for padding
 
 classified_checkbox.pack(side=tk.RIGHT)
