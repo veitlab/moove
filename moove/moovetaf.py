@@ -559,7 +559,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                 min_silent_waited = True
 
         if len(targeted_sequence_list) > 1:
-            targeted_sequence = np.random.choise(targeted_sequence_list)
+            targeted_sequence = np.random.choice(targeted_sequence_list)
         elif len(targeted_sequence_list) == 1:
             targeted_sequence = targeted_sequence_list[0]
         elif targeted_sequence_list == None:
