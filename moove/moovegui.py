@@ -91,28 +91,29 @@ try:
     icon_path = os.path.abspath(icon_path)
 
     if os.name == 'nt':
+        # Windows: set AppUserModelID for correct taskbar icon
         myappid = 'tkinter.python.test'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+    # Load icon (fallback logic)
     if os.path.exists(icon_path):
         # Load the 128x128 PNG in full resolution - no resizing for best quality
         icon_image = Image.open(icon_path)
-        icon_photo = ImageTk.PhotoImage(icon_image)
-        root.iconphoto(True, icon_photo)
-        logger.info(f"Window icon set successfully from {icon_path} (128x128)")
     else:
         # Fallback to original logo.png if 128 version not found
         fallback_path = os.path.join(package_dir, "templates", "logo.png")
         fallback_path = os.path.abspath(fallback_path)
-
         if os.path.exists(fallback_path):
             icon_image = Image.open(fallback_path)
-            # Keep original size for best quality, let the system handle sizing
-            icon_photo = ImageTk.PhotoImage(icon_image)
-            root.iconphoto(True, icon_photo)
-            logger.info(f"Window icon set successfully from fallback {fallback_path}")
         else:
-            logger.warning(f"No icon files found in templates directory")
+            icon_image = None
+
+    if icon_image:
+        icon_photo = ImageTk.PhotoImage(icon_image)
+        root.iconphoto(True, icon_photo)
+        logger.info(f"Window icon set successfully ({icon_path if os.path.exists(icon_path) else fallback_path})")
+    else:
+        logger.warning("No icon files found in templates directory")
 except Exception as e:
     logger.warning(f"Could not set window icon: {e}")
 
