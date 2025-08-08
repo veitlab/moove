@@ -1,16 +1,15 @@
-File created: Tue, Apr 30, 2024, 18:30:38.41 
- 
-    begin rec = 0 ms 
-    trig time  = 2000 ms 
-    rec end = 10707 ms 
- 
-ADFREQ = 44100 
-Chans = 1 
-Samples = 472192 
-Catch Song = 0 
-Hand Segmented = 0
-Hand Classified = 0
-T Before = 2.0000000000E+00 
-T After = 1.0000000000E+00 
-Feedback information: 
- 
+File created: Hallo 123
+
+    begin rec = 0 ms
+    trig time  = 2000 ms
+    rec end = 13788 ms
+
+ADFREQ = 44100
+Chans = 1
+Samples = 584496
+Catch Song = 1
+Hand Segmented = 1
+Hand Classified = 1
+T Before = 2.0
+T After = 1.0
+Feedback information:
