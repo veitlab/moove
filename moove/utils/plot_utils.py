@@ -24,10 +24,12 @@ def get_analysis_fig(app_state, filepath):
     spectrogram_data = display_dict["spectrogram_data"]
     amplitude = display_dict["amplitude"]
 
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 4), gridspec_kw={'height_ratios': [6, 1, 6]}, sharex=True) #, dpi=71.94)
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 4), gridspec_kw={'height_ratios': [6, 1, 6]},
+                                        sharex=True)  # , dpi=71.94)
 
     # Filter frequencies based on config
-    valid_freqs = (freqs >= int(app_state.config['lower_spec_plot'])) & (freqs <= int(app_state.config['upper_spec_plot']))
+    valid_freqs = (freqs >= int(app_state.config['lower_spec_plot'])) & (
+                freqs <= int(app_state.config['upper_spec_plot']))
     filtered_freqs = freqs[valid_freqs]
     filtered_spectrogram_data = spectrogram_data[valid_freqs, :]
 
@@ -37,8 +39,8 @@ def get_analysis_fig(app_state, filepath):
     db_spec = decibel(amplitude_spec)
 
     # check for catch file
-    catch = load_recfile(os.path.splitext(filepath["file_path"])[0]+".rec")["catch_song"]
-    
+    catch = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["catch_song"]
+
     spec = ax1.pcolormesh(times, filtered_freqs, db_spec, shading='gouraud', cmap='jet')
     if catch == 1:
         ax1.set_title(file_name + " catch ", color=app_state.text_color)
@@ -85,12 +87,12 @@ def get_analysis_fig(app_state, filepath):
 def update_plots(display_dict, app_state, filepath):
     """Update plots with new display data."""
     ax1, ax2, ax3 = app_state.get_axes()
-    
-    for ax in (ax1, ax2, ax3): # added
-        ax.tick_params(axis='both', colors=app_state.text_color) # added
 
-    plt.tight_layout() # added
-    plt.subplots_adjust(left=0.129, right=0.999, top=0.92, bottom=0.1, hspace=0.1) # added
+    for ax in (ax1, ax2, ax3):  # added
+        ax.tick_params(axis='both', colors=app_state.text_color)  # added
+
+    plt.tight_layout()  # added
+    plt.subplots_adjust(left=0.129, right=0.999, top=0.92, bottom=0.1, hspace=0.1)  # added
 
     vmin, vmax = app_state.current_vmin, app_state.current_vmax
 
@@ -109,7 +111,7 @@ def update_plots(display_dict, app_state, filepath):
     catch = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["catch_song"]
     feedback_time = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["feedback_info"]
 
-     # Update ax1 (Spectrogram)
+    # Update ax1 (Spectrogram)
     ax1.clear()
     app_state.spec = ax1.pcolormesh(display_dict["times"], filtered_freqs, db_spec,
                                     shading='gouraud', cmap='jet', vmin=vmin, vmax=vmax)
@@ -123,32 +125,22 @@ def update_plots(display_dict, app_state, filepath):
 
     # catch trials
     if catch == 1:
-        ax1.text(0.0, 1.0, "catch", color='red', fontsize=17,
-                transform=ax1.transAxes)
-        rect = patches.Rectangle(
-            (pos.x0, pos.y0),          
-            pos.width, pos.height,      
-            linewidth=1,
-            edgecolor='tomato',
-            facecolor='none',
-            transform=fig.transFigure, 
-            zorder=100
-        )
+        ax1.text(0.0, 1.0, "catch", color='crimson', fontsize=17, transform=ax1.transAxes)
+        rect = patches.Rectangle((pos.x0, pos.y0), pos.width, pos.height, linewidth=1,
+                                 edgecolor='crimson', facecolor='none', transform=fig.transFigure, zorder=100)
         rect.is_box = True
         fig.patches.append(rect)
-        ax1.set_title(display_dict["file_name"], color=app_state.text_color)
 
-    # non-catch trials with feedback visualization
-    else:
-        feedback_timings = []
-        if feedback_time:
-            for i in range(len(feedback_time)):
-                feedback_timings.append(feedback_time[i][0])
-            for t in feedback_timings:
-                ax1.text(t, -0.01, '^', ha='center', va='top', color='tomato', fontsize=24,
-                transform=ax1.get_xaxis_transform(), zorder = 1000000)
-        ax1.set_title(display_dict["file_name"], color=app_state.text_color)
+    # trials with feedback visualization
+    feedback_timings = []
+    if feedback_time:
+        for i in range(len(feedback_time)):
+            feedback_timings.append(feedback_time[i][0])
+        for t in feedback_timings:
+            ax1.text(t, -0.01, '^', ha='center', va='top', color='red', fontsize=24,
+                     transform=ax1.get_xaxis_transform(), zorder=1000000)
 
+    ax1.set_title(display_dict["file_name"], color=app_state.text_color)
     ax1.set_ylabel('Frequency (Hz)', color=app_state.text_color)
 
     # Update ax2 (Label visualization)
@@ -169,7 +161,8 @@ def update_plots(display_dict, app_state, filepath):
 
     # Update ax3 (Amplitude plot)
     ax3.clear()
-    ax3.plot(np.arange(len(display_dict["song_data"])) / display_dict["sampling_rate"], display_dict["amplitude"], color='#2653c5')
+    ax3.plot(np.arange(len(display_dict["song_data"])) / display_dict["sampling_rate"], display_dict["amplitude"],
+             color='#2653c5')
     ax3.set_ylabel('Amplitude (dB)', color=app_state.text_color)
     ax3.set_xlabel('Time (s)', color=app_state.text_color)
     ax3.set_ylim(display_dict["amplitude"].min(), display_dict["amplitude"].max())
@@ -186,9 +179,9 @@ def update_plots(display_dict, app_state, filepath):
 
     app_state.set_axes(ax1, ax2, ax3)
 
-    fig.patch.set_facecolor(app_state.bg_color) # added
+    fig.patch.set_facecolor(app_state.bg_color)  # added
 
-    fig.align_ylabels() # added
+    fig.align_ylabels()  # added
     app_state.draw_canvas()
 
 
@@ -209,7 +202,8 @@ def update_ax2_ax3(ax2, ax3, display_dict, app_state):
     ax2.set_xlim(x_lim)
 
     ax3.clear()
-    ax3.plot(np.arange(len(display_dict["song_data"])) / display_dict["sampling_rate"], display_dict["amplitude"], color='#2653c5')
+    ax3.plot(np.arange(len(display_dict["song_data"])) / display_dict["sampling_rate"], display_dict["amplitude"],
+             color='#2653c5')
     ax3.set_ylabel('Amplitude (dB)', color=app_state.text_color)
     ax3.set_xlabel('Time (s)', color=app_state.text_color)
     ax3.set_ylim(display_dict["amplitude"].min(), display_dict["amplitude"].max())
@@ -231,17 +225,17 @@ def update_ax2_ax3(ax2, ax3, display_dict, app_state):
 def update_ax2(ax2, display_dict, app_state):
     """Update the second axis with new display data."""
     x_lim = ax2.get_xlim()
-    y_lim = ax2.get_ylim() 
-    ax2.clear()   
+    y_lim = ax2.get_ylim()
+    ax2.clear()
     ax2.set_yticks([])
     ax2.set_xlim(x_lim)
 
     # cover up old labels temporarily
     ax2.add_patch(
         plt.Rectangle(
-            (x_lim[0], y_lim[0]), 
-            x_lim[1] - x_lim[0],   
-            y_lim[1] - y_lim[0],   
+            (x_lim[0], y_lim[0]),
+            x_lim[1] - x_lim[0],
+            y_lim[1] - y_lim[0],
             color='white', zorder=0
         )
     )
@@ -277,8 +271,8 @@ def plot_data(app_state):
     app_state.set_original_y_range_ax1(original_y_range_ax1, original_y_range_ax2, original_y_range_ax3)
 
     # Load and set segmented and classified for the checkboxes
-    hand_segmented = load_recfile(os.path.splitext(file_path["file_path"])[0]+".rec")["hand_segmented"]
-    hand_classified = load_recfile(os.path.splitext(file_path["file_path"])[0]+".rec")["hand_classified"]
+    hand_segmented = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_segmented"]
+    hand_classified = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_classified"]
     app_state.segmented_var.set(str(hand_segmented))
     app_state.classified_var.set(str(hand_classified))
 
