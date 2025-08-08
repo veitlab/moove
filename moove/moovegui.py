@@ -23,7 +23,8 @@ from moove.utils import (
     save_seg_class_recfile, get_analysis_fig, plot_data, select_event, edit_syllable,
     handle_keypress, zoom, unzoom, swipe_left, swipe_right, handle_playback,
     handle_delete, handle_crop, open_resegment_window, update,
-    open_cluster_window, open_training_window, open_relabel_window, find_batch_files
+    open_cluster_window, open_training_window, open_relabel_window, find_batch_files,
+    create_batch_file
 )
 
 # Model imports
@@ -181,6 +182,8 @@ def update_selected_day(app_state):
         batch_files = find_batch_files(selected_day_path)
         app_state.batch_combobox['values'] = batch_files
         app_state.batch_combobox.set("batch.txt")  # Reset to default batch
+        if not batch_files:
+            create_batch_file(selected_day_path)
         app_state.current_batch_file = "batch.txt"
 
         # Load song files from default batch
