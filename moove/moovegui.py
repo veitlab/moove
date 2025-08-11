@@ -423,7 +423,7 @@ if not os.path.exists(full_path):
     app_state.logger.info(f"{current_file_name} not found, entry removed - defaulting to first file.")
 
 # update batch files with every GUI start
-valid_files = set(
+valid_files = sorted(
     f for f in os.listdir(app_state.data_dir) 
     if f.endswith('.wav') or f.endswith('.cbin')
 )
