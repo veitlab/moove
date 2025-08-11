@@ -18,6 +18,7 @@ from jinja2 import Template
 from pathlib import Path
 from moove.utils.movefuncs_utils import save_notmat
 from moove import templates
+from IPython import embed
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -100,12 +101,14 @@ if realtime_classification:
     offset_window_size = int(config.get(bird_name, 'offset_window_size'))
     n_offset_false = int(config.get(bird_name, 'n_offset_false'))
     
+
     # target string is read in as the regular expression
     targeted_sequence_str = config.get(bird_name, 'targeted_sequence')
     if targeted_sequence_str.lower() != 'none':
         targeted_sequence_list = [snippet.strip() for snippet in targeted_sequence_str.split(',')]
     else:
         targeted_sequence_list = None
+
 
     # path to the playback stimuli that can be played
     playback_stim_path = os.path.expanduser(config.get(bird_name, 'playback_dir'))
@@ -179,6 +182,7 @@ else:
     device = None
     # Set variables that may be used in the code
     targeted_sequence = None
+    targeted_sequence_list = None
     lowcut = None
     highcut = None
     int_to_label = None
@@ -306,9 +310,15 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
     logger.debug("Type of raw_audio_chunks: %s", type(raw_audio_chunks))
     logger.debug("Length of raw_audio_chunks: %s", len(raw_audio_chunks))
 
-    if bout_indexes_waited + add_index >= len(raw_audio_chunks):
-        logger.info("Not enough data available to save.")
-        return
+    # Check if we need to add empty chunks
+    required_chunks = bout_indexes_waited + add_index
+    if required_chunks > len(raw_audio_chunks):
+        missing_chunks = required_chunks - len(raw_audio_chunks)
+        logger.info(f"Adding {missing_chunks} empty chunks to fill the gap")
+        
+        for _ in range(missing_chunks):
+            empty_chunk = np.zeros(chunk_size, dtype=np.float32)
+            raw_audio_chunks.append(empty_chunk)
 
     raw_audio2save = np.concatenate(raw_audio_chunks[-(bout_indexes_waited + add_index):])
 
@@ -422,6 +432,7 @@ onsets = []
 offsets = []
 onset_flag = False
 offset_pending = False
+offset_detected_time = 0  # Store when offset was first detected
 waited_class_time = 0
 class_flag = False
 pred_syl_list = []
@@ -433,6 +444,7 @@ no_classify_flag_wn_idx2wait = 0
 missing_y_pred_flag = False
 min_silent_index2wait = 0
 min_silent_waited = True
+initialization_complete = False  # New flag to track initialization
 
 if realtime_classification:
     y_pred_list = [0] * hist_size
@@ -467,6 +479,9 @@ def stream_callback(indata, outdata, frames, time_info, status):
     global min_silent_index2wait
     global min_silent_waited
     global seg_input_size
+    global initialization_complete
+    global offset_detected_time
+    global targeted_sequence_list, targeted_sequence
 
     global is_playing_white_noise, white_noise_index, white_noise
     global is_playing_playback_file, playback_sound_index, playback_sound
@@ -492,6 +507,12 @@ def stream_callback(indata, outdata, frames, time_info, status):
     audio_data = np.asarray(audio_data, dtype=np.float32)
     raw_audio_chunks.append(audio_data.copy())
 
+    # Check if we have enough data for initialization (t_before seconds)
+    required_chunks = int(seconds_to_index(t_before, chunk_size, frame_rate))
+    if not initialization_complete and len(raw_audio_chunks) >= required_chunks:
+        initialization_complete = True
+        logger.info(f"Initialization complete. Collected {len(raw_audio_chunks)} chunks ({len(raw_audio_chunks) * chunk_size / frame_rate:.2f} seconds)")
+
     # Apply bandpass filter
     filtered_data, zi = apply_butter_bandpass_filter(
         audio_data,
@@ -513,8 +534,8 @@ def stream_callback(indata, outdata, frames, time_info, status):
             origin=0
         )[-1]
 
-    # Check threshold and start recording
-    if smoothed_db > bout_threshold_db and not bout_flag:
+    # Check threshold and start recording (only after initialization is complete)
+    if smoothed_db > bout_threshold_db and not bout_flag and initialization_complete:
         bout_index2wait = int(seconds_to_index(t_after, chunk_size, frame_rate))
         recdt = datetime.datetime.now() - datetime.timedelta(seconds=t_before)
         bout_recdt = recdt
@@ -528,12 +549,17 @@ def stream_callback(indata, outdata, frames, time_info, status):
         else:
             not_catch_trial_flag = False
             wn_recfile_dict["catch_song"] = 1
-            # Add catch trial feedback information immediately when bout starts
-            trigger_time = t_before * 1000  # Initial trigger time at bout start
-            formatted_time = millisecond_to_fixed_notation(trigger_time)
-            file_path_catch = "catch_trial_no_playback"
-            template_value_catch = 0
-            wn_recfile_dict[formatted_time] = f"catch # {file_path_catch} : Templ = {template_value_catch}"
+
+        # chooses the target sequence for the upcoming bout from the target sequence list
+        # if several options then choose one randomly
+        if targeted_sequence_list is None:
+            targeted_sequence = None
+        elif len(targeted_sequence_list) > 1:
+            targeted_sequence = np.random.choice(targeted_sequence_list)
+        elif len(targeted_sequence_list) == 1:
+            targeted_sequence = targeted_sequence_list[0]
+        else:
+            logger.error("Wrong or no target sequence given")
 
         logger.info("Not catch trial flag: %s", not_catch_trial_flag)
         logger.info("Threshold triggered")
@@ -557,15 +583,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
             min_silent_index2wait -= 1
             if min_silent_index2wait <= 0:
                 min_silent_waited = True
-
-        if len(targeted_sequence_list) > 1:
-            targeted_sequence = np.random.choice(targeted_sequence_list)
-        elif len(targeted_sequence_list) == 1:
-            targeted_sequence = targeted_sequence_list[0]
-        elif targeted_sequence_list == None:
-            targeted_sequence = None
-        else:
-            logger.error("Wrong or no target sequence given")
 
     # Determine if classification is allowed
     classification_allowed = realtime_classification and min_silent_waited and not no_classify_flag_wn
@@ -624,23 +641,75 @@ def stream_callback(indata, outdata, frames, time_info, status):
                 # Onset detection
                 sub_y = y_pred_list[-onset_window_size:]
                 count = sub_y.count(1)
-                if not onset_flag and count >= n_onset_true:
-                    sub_y_rev = sub_y[::-1]
-                    try:
-                        idx_10 = sub_y_rev.index(0)
-                    except ValueError:
-                        idx_10 = 0
-                    onset_time = ((index_to_seconds(bout_indexes_waited - idx_10, chunk_size, frame_rate)) * 1000) + (
-                                t_before * 1000)
-                    onsets.append(onset_time)
-                    onset_flag = True
-                    class_flag = True
-                    waited_class_time = input_chunks - idx_10
+                
+                # New onset can only be detected if:
+                # 1. No onset is currently active (onset_flag = False), OR
+                # 2. Current onset has offset condition met (enough zeros for offset)
+                zeros_in_window = len(sub_y) - count  # Number of zeros in window
+                can_detect_new_onset = (not onset_flag) or (onset_flag and zeros_in_window >= n_offset_false)
+                
+                if can_detect_new_onset and count >= n_onset_true:
+                    # If there's an active onset with offset condition met, process the offset first
+                    if onset_flag and zeros_in_window >= n_offset_false:
+                        logger.debug("Processing offset for current syllable before new onset")
+                        
+                        # Handle pending offset or immediate offset
+                        if offset_pending:
+                            # Use the originally detected time
+                            offset_time_index = offset_detected_time
+                        else:
+                            # Calculate current offset time
+                            offset_time_index = bout_indexes_waited
+                        
+                        # Calculate offset time
+                        sub_y_long_rev = y_pred_list[::-1]
+                        try:
+                            idx = sub_y_long_rev.index(1)
+                        except ValueError:
+                            idx = 0
+                        offset_time = ((index_to_seconds(offset_time_index - idx, chunk_size,
+                                                         frame_rate)) * 1000) + (t_before * 1000)
+                        offsets.append(offset_time)
+                        min_silent_index2wait = int(seconds_to_index(min_silent_duration, chunk_size, frame_rate))
+                        min_silent_waited = False
+                        
+                        # Check syllable duration
+                        last_duration = offsets[-1] - onsets[-1]
+                        len_offset = len(offsets)
+                        len_ypred = len(pred_syl_list)
+                        if last_duration < (min_syllable_length * 1000):
+                            onsets.pop()
+                            offsets.pop()
+                            if len_ypred == len_offset:
+                                pred_syl_list.pop()
+                                pred_syl_list_for_playback.pop()
+                        
+                        # Reset flags for new onset
+                        onset_flag = False
+                        offset_pending = False
+                        offset_detected_time = 0
+                    
+                    # Now detect the new onset
+                    if count >= n_onset_true:
+                        sub_y_rev = sub_y[::-1]
+                        try:
+                            idx_10 = sub_y_rev.index(0)
+                        except ValueError:
+                            idx_10 = 0
+                        onset_time = ((index_to_seconds(bout_indexes_waited - idx_10, chunk_size, frame_rate)) * 1000) + (
+                                    t_before * 1000)
+                        onsets.append(onset_time)
+                        onset_flag = True
+                        class_flag = True
+                        waited_class_time = input_chunks - idx_10
 
                 # Offset detection
-                elif onset_flag and count <= n_offset_false:
+                elif onset_flag and zeros_in_window >= n_offset_false:
                     if class_flag:
                         # Classification is still pending; set offset_pending
+                        if not offset_pending:
+                            # Store the time when offset was first detected
+                            offset_detected_time = bout_indexes_waited
                         offset_pending = True
                     else:
                         # Proceed to record offset
@@ -661,7 +730,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
                         len_ypred = len(pred_syl_list)
                         if last_duration < (min_syllable_length * 1000):
                             # Remove the last onset, offset, and corresponding pred_syl_list entry
-                            # ToDo: WHY?
                             onsets.pop()
                             offsets.pop()
                             if len_ypred == len_offset:
@@ -674,6 +742,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                 logger.error("Mismatch in lengths!")
                         onset_flag = False
                         offset_pending = False
+                        offset_detected_time = 0
 
                 # Classification
                 if class_flag:
@@ -712,11 +781,13 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                             t_before * 1000)
                                 formatted_time = millisecond_to_fixed_notation(trigger_time)
 
-                                # Only handle non-catch trials here (catch trials already have feedback)
+                                # not_catch trial: choose feedback and put time in rec file,
+                                # catch trial: writes theoretical playback time into rec file
                                 if not_catch_trial_flag:
                                     if computer_generated_white_noise:
                                         # playback of computer generated white noise
-                                        play_white_noise(white_noise_duration * 1000)
+                                        play_white_noise(
+                                            white_noise_duration * 1000)
                                         file_path = 'computer_generated_WN'
                                         sound_duration = white_noise_duration
                                         logger.info(f"WN is {np.round(sound_duration * 1000, 0)}ms long")
@@ -724,29 +795,37 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                         # playback of random stimulus in the playback folder of bird from the config
                                         # file path
                                         file_path = random.choice(list(playback_sounds.keys()))
-                                        play_playback_file(file_path)
+                                        play_playback_file(
+                                            playback_sounds, file_path)
                                         sound_duration = np.round(len(playback_sound) / frame_rate, 3)
                                         logger.info(f"Playback sound is {np.round(sound_duration * 1000, 0)}ms long")
-
+    
                                     # add the stimulus to the list so that after the playback the list has an entry
                                     # for the playback given. It should not compare the last predicted syllables with
                                     # the target sequence as if nothing happend and play back the stimulus again
                                     pred_syl_list_for_playback.append('-')
-                                    no_classify_flag_wn = True  # wait to classify during playback or white noise
+                                    # no_classify_flag_wn = True  # wait to classify during playback or white noise
                                     template_value_wn = 0  # Adjust as necessary
                                     wn_recfile_dict[formatted_time] = f"FB # {file_path} : Templ = {template_value_wn}"
                                     # I (JG) think this is so that classification isn't going on during playback
-                                    no_classify_flag_wn_idx2wait = int(
-                                        seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
-                                # For catch trials, do nothing here as feedback is already recorded at bout start
+                                    # no_classify_flag_wn_idx2wait = int(
+                                    #     seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
+                                # writes theoretical playback time into rec file
+                                elif not not_catch_trial_flag:
+                                    template_value_catch = 0  # Adjust as necessary
+                                    wn_recfile_dict[
+                                        formatted_time] = f"catch # catch_file.wav : Templ = {template_value_catch}"
+
                         # After classification, check if an offset is pending
                         if offset_pending:
+                            # Process the pending offset - offset condition was met when detected
+                            # Use the originally detected time, not current time
                             sub_y_long_rev = y_pred_list[::-1]
                             try:
                                 idx = sub_y_long_rev.index(1)
                             except ValueError:
                                 idx = 0
-                            offset_time = ((index_to_seconds(bout_indexes_waited - idx, chunk_size,
+                            offset_time = ((index_to_seconds(offset_detected_time - idx, chunk_size,
                                                              frame_rate)) * 1000) + (t_before * 1000)
                             offsets.append(offset_time)
                             min_silent_index2wait = int(seconds_to_index(min_silent_duration, chunk_size, frame_rate))
@@ -769,7 +848,8 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                 else:
                                     logger.error("Mismatch in lengths!")
                             onset_flag = False
-                            offset_pending = False  # Reset the offset_pending flag
+                            offset_pending = False
+                            offset_detected_time = 0
 
     # Output handling (Playback)
     if is_playing_white_noise:
