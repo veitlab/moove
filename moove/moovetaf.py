@@ -77,6 +77,7 @@ bandpass_order = int(config.get(bird_name, 'bandpass_order'))
 realtime_classification = config.getboolean(bird_name, 'realtime_classification')
 
 # white noise
+targeting = config.getboolean(bird_name, 'targeting')
 catch_trial_probability = float(config.get(bird_name, 'catch_trial_probability'))
 white_noise_duration = float(config.get(bird_name, 'white_noise_duration'))
 trigger_time_offset = float(config.get(bird_name, 'trigger_time_offset'))
@@ -773,47 +774,50 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                     predicted_class)  # this is the list of syllables that are compared with the target sequence
                             else:
                                 missing_y_pred_flag = False
-                            # Check if last sequence is equal to targeted sequence for potential playback
-                            if targeted_sequence and check_targeted_sequence(pred_syl_list_for_playback,
-                                                                             targeted_sequence):
-                                trigger_time = index_to_seconds(bout_indexes_waited, chunk_size, frame_rate) * 1000 + (
-                                            t_before * 1000)
-                                formatted_time = millisecond_to_fixed_notation(trigger_time)
+                                
+                            # if targeting is True, check if the last sequence is equal to the targeted sequence
+                            if targeting:
+                                # Check if last sequence is equal to targeted sequence for potential playback
+                                if targeted_sequence and check_targeted_sequence(pred_syl_list_for_playback,
+                                                                                targeted_sequence):
+                                    trigger_time = index_to_seconds(bout_indexes_waited, chunk_size, frame_rate) * 1000 + (
+                                                t_before * 1000)
+                                    formatted_time = millisecond_to_fixed_notation(trigger_time)
 
-                                # not_catch trial: choose feedback and put time in rec file,
-                                # catch trial: writes theoretical playback time into rec file
-                                if not_catch_trial_flag:
-                                    if computer_generated_white_noise:
-                                        # playback of computer generated white noise
-                                        play_white_noise(
-                                            white_noise_duration * 1000)
-                                        file_path = 'computer_generated_WN'
-                                        sound_duration = white_noise_duration
-                                        logger.info(f"WN is {np.round(sound_duration * 1000, 0)}ms long")
-                                    elif not computer_generated_white_noise:
-                                        # playback of random stimulus in the playback folder of bird from the config
-                                        # file path
-                                        file_path = random.choice(list(playback_sounds.keys()))
-                                        play_playback_file(
-                                            playback_sounds, file_path)
-                                        sound_duration = np.round(len(playback_sound) / frame_rate, 3)
-                                        logger.info(f"Playback sound is {np.round(sound_duration * 1000, 0)}ms long")
-    
-                                    # add the stimulus to the list so that after the playback the list has an entry
-                                    # for the playback given. It should not compare the last predicted syllables with
-                                    # the target sequence as if nothing happend and play back the stimulus again
-                                    pred_syl_list_for_playback.append('-')
-                                    # no_classify_flag_wn = True  # wait to classify during playback or white noise
-                                    template_value_wn = 0  # Adjust as necessary
-                                    wn_recfile_dict[formatted_time] = f"FB # {file_path} : Templ = {template_value_wn}"
-                                    # I (JG) think this is so that classification isn't going on during playback
-                                    # no_classify_flag_wn_idx2wait = int(
-                                    #     seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
-                                # writes theoretical playback time into rec file
-                                elif not not_catch_trial_flag:
-                                    template_value_catch = 0  # Adjust as necessary
-                                    wn_recfile_dict[
-                                        formatted_time] = f"catch # catch_file.wav : Templ = {template_value_catch}"
+                                    # not_catch trial: choose feedback and put time in rec file,
+                                    # catch trial: writes theoretical playback time into rec file
+                                    if not_catch_trial_flag:
+                                        if computer_generated_white_noise:
+                                            # playback of computer generated white noise
+                                            play_white_noise(
+                                                white_noise_duration * 1000)
+                                            file_path = 'computer_generated_WN'
+                                            sound_duration = white_noise_duration
+                                            logger.info(f"WN is {np.round(sound_duration * 1000, 0)}ms long")
+                                        elif not computer_generated_white_noise:
+                                            # playback of random stimulus in the playback folder of bird from the config
+                                            # file path
+                                            file_path = random.choice(list(playback_sounds.keys()))
+                                            play_playback_file(
+                                                playback_sounds, file_path)
+                                            sound_duration = np.round(len(playback_sound) / frame_rate, 3)
+                                            logger.info(f"Playback sound is {np.round(sound_duration * 1000, 0)}ms long")
+        
+                                        # add the stimulus to the list so that after the playback the list has an entry
+                                        # for the playback given. It should not compare the last predicted syllables with
+                                        # the target sequence as if nothing happend and play back the stimulus again
+                                        pred_syl_list_for_playback.append('-')
+                                        no_classify_flag_wn = True  # wait to classify during playback or white noise
+                                        template_value_wn = 0  # Adjust as necessary
+                                        wn_recfile_dict[formatted_time] = f"FB # {file_path} : Templ = {template_value_wn}"
+                                        # no classification during playback or white noise
+                                        no_classify_flag_wn_idx2wait = int(
+                                            seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
+                                    # writes theoretical playback time into rec file
+                                    elif not not_catch_trial_flag:
+                                        template_value_catch = 0  # Adjust as necessary
+                                        wn_recfile_dict[
+                                            formatted_time] = f"catch # catch_file.wav : Templ = {template_value_catch}"
 
                         # After classification, check if an offset is pending
                         if offset_pending:
