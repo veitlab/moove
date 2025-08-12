@@ -37,6 +37,7 @@ segmentation_model_name = bird_x_example_seg_model.pth
 classification_model_name = bird_x_example_class_model.pth
 
 # white noise
+targeting = False
 targeted_sequence = [jc]a$
 catch_trial_probability = 0.1
 white_noise_duration = 0.08
@@ -52,3 +53,4 @@ offset_window_size = 5
 n_offset_false = 4
 min_syllable_length = 0.03
 min_silent_duration = 0.005
+
