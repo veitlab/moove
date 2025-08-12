@@ -18,7 +18,6 @@ from jinja2 import Template
 from pathlib import Path
 from moove.utils.movefuncs_utils import save_notmat
 from moove import templates
-from IPython import embed
 
 # Set up logging
 logger = logging.getLogger(__name__)
