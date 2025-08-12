@@ -62,7 +62,12 @@ t_before = float(config.get('TAF', 't_before'))  # Already in seconds
 t_after = float(config.get('TAF', 't_after'))  # Already in seconds
 min_bout_duration = float(config.get('TAF', 'min_bout_duration'))
 memory_cleanup_interval = int(config.get('TAF', 'memory_cleanup_interval'))
-config_input_channels = int(config.get('TAF', 'input_channels'))
+# Parse input channel configuration (supports single channel or comma-separated channels)
+input_channel_str = config.get('TAF', 'input_channel')
+if ',' in input_channel_str:
+    config_input_channel = [int(x.strip()) for x in input_channel_str.split(',')]
+else:
+    config_input_channel = [int(input_channel_str)]
 
 # section bird
 data_output_folder_path = os.path.join(global_dir, 'rec_data')
@@ -486,7 +491,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
     global is_playing_white_noise, white_noise_index, white_noise
     global is_playing_playback_file, playback_sound_index, playback_sound
     global bandpass_numerator_coeffs, bandpass_denominator_coeffs, zi
-    global frame_rate, channels, input_chunks
+    global frame_rate, channels, input_chunks, config_input_channel
     global lowcut, highcut
     global int_to_label
     global device
@@ -494,13 +499,13 @@ def stream_callback(indata, outdata, frames, time_info, status):
 
     input_channels = channels[0]
 
-    if input_channels > 1:
-        # audio_data = indata.mean(axis=1) # old nils code
-        # ToDo: fix that it can take also several channels but only the ones you want to have
-        # ToDo: also now not flexible to take other channels than the first maybe as a input which one you want???
-        audio_data = indata[:, 0]
+    if len(config_input_channel) == 1:
+        audio_data = indata[:, config_input_channel[0]]
+    elif input_channels > 1 and len(config_input_channel) == 2:
+        audio_data = (indata[:, config_input_channel[0]] + indata[:, config_input_channel[1]]) / 2
     else:
-        audio_data = indata[:, 0]
+        logger.error("Too many input channels given. Only 1 or 2 channels are allowed.\nPlease quit the program!!!")
+        
 
     # multiply audio_signal to get signal range between -1 and 1
     audio_data = audio_data * 1e2

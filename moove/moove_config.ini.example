@@ -21,7 +21,7 @@ t_before = 2
 t_after = 1
 min_bout_duration = 6
 memory_cleanup_interval = 60
-input_channels = 1
+input_channel = 0
 
 [bird_x]
 # trained_models
