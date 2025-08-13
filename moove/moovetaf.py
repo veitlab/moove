@@ -802,8 +802,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                             # playback of random stimulus in the playback folder of bird from the config
                                             # file path
                                             file_path = random.choice(list(playback_sounds.keys()))
-                                            play_playback_file(
-                                                playback_sounds, file_path)
+                                            play_playback_file(file_path)
                                             sound_duration = np.round(len(playback_sound) / frame_rate, 3)
                                             logger.info(f"Playback sound is {np.round(sound_duration * 1000, 0)}ms long")
         
