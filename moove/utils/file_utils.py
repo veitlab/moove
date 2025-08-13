@@ -138,20 +138,26 @@ def get_display_data(file_data_dict, config):
 def save_seg_class_recfile(filepath, segmented, classified):
     """Save or update recfile for a specific file"""
 
-    with open(filepath, 'r') as f:
-        lines = f.readlines()
+    try:
+        with open(filepath, 'r') as f:
+            lines = f.readlines()
 
-    new_lines = []
-    for line in lines:
-        if line.strip().startswith('Hand Segmented ='):
-            new_lines.append(f'Hand Segmented = {segmented}\n')
-        elif line.strip().startswith('Hand Classified ='):
-            new_lines.append(f'Hand Classified = {classified}\n')
-        else:
-            new_lines.append(line)
+        new_lines = []
+        for line in lines:
+            if line.strip().startswith('Hand Segmented ='):
+                new_lines.append(f'Hand Segmented = {segmented}\n')
+            elif line.strip().startswith('Hand Classified ='):
+                new_lines.append(f'Hand Classified = {classified}\n')
+            else:
+                new_lines.append(line)
 
-    with open(filepath, 'w') as f:
-        f.writelines(new_lines)
+        with open(filepath, 'w') as f:
+            f.writelines(new_lines)
+            
+    except FileNotFoundError:
+        # If the recfile doesn't exist, just continue without saving
+        # This prevents crashes when the file is in a different directory
+        pass
 
 
 def get_files_for_day(app_state, bird, experiment, day, batch_file="batch.txt"):

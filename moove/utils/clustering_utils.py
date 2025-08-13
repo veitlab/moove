@@ -312,8 +312,10 @@ def replace_labels_from_df(app_state, dataset_name):
         save_notmat(save_path, display_dict)
 
     progressbar['value'] = max_value
+    plot_data(app_state)
     progressbar.grid_forget()
     app_state.cluster_window.destroy()
     messagebox.showinfo("Info", "Replacement of syllables complete!")
     app_state.change_file(0)
+
 

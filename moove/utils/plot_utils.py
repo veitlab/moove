@@ -255,27 +255,72 @@ def plot_data(app_state):
     """Plot new data and update the application state."""
     from moove.utils.file_utils import get_file_data_by_index, get_display_data
 
-    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
-    app_state.display_dict = get_display_data(file_path, app_state.config)
+    try:
+        file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+        app_state.display_dict = get_display_data(file_path, app_state.config)
 
-    update_plots(app_state.display_dict, app_state, file_path)
-    ax1, ax2, ax3 = app_state.get_axes()
-    ax1.set_navigate(False)
+        update_plots(app_state.display_dict, app_state, file_path)
+        ax1, ax2, ax3 = app_state.get_axes()
+        ax1.set_navigate(False)
 
-    # Set original axis ranges for zooming and unzooming
-    original_x_range = (ax1.get_xlim()[0], ax1.get_xlim()[1])
-    app_state.set_original_x_range(original_x_range)
-    original_y_range_ax1 = (ax1.get_ylim()[0], ax1.get_ylim()[1])
-    original_y_range_ax2 = (ax2.get_ylim()[0], ax2.get_ylim()[1])
-    original_y_range_ax3 = (ax3.get_ylim()[0], ax3.get_ylim()[1])
-    app_state.set_original_y_range_ax1(original_y_range_ax1, original_y_range_ax2, original_y_range_ax3)
+        # Set original axis ranges for zooming and unzooming
+        original_x_range = (ax1.get_xlim()[0], ax1.get_xlim()[1])
+        app_state.set_original_x_range(original_x_range)
+        original_y_range_ax1 = (ax1.get_ylim()[0], ax1.get_ylim()[1])
+        original_y_range_ax2 = (ax2.get_ylim()[0], ax2.get_ylim()[1])
+        original_y_range_ax3 = (ax3.get_ylim()[0], ax3.get_ylim()[1])
+        app_state.set_original_y_range_ax1(original_y_range_ax1, original_y_range_ax2, original_y_range_ax3)
 
-    # Load and set segmented and classified for the checkboxes
-    hand_segmented = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_segmented"]
-    hand_classified = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_classified"]
-    app_state.segmented_var.set(str(hand_segmented))
-    app_state.classified_var.set(str(hand_classified))
+        # Load and set segmented and classified for the checkboxes
+        hand_segmented = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_segmented"]
+        hand_classified = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_classified"]
+        app_state.segmented_var.set(str(hand_segmented))
+        app_state.classified_var.set(str(hand_classified))
 
-    app_state.logger.debug("Recfile loaded and checkboxes updated for file: %s", file_path["file_name"])
+        app_state.logger.debug("Recfile loaded and checkboxes updated for file: %s", file_path["file_name"])
 
-    app_state.draw_canvas()
+        # Store the last valid file path for fallback
+        if hasattr(app_state, 'last_valid_file_path'):
+            app_state.last_valid_file_path = file_path["file_path"]
+        else:
+            app_state.last_valid_file_path = file_path["file_path"]
+
+        app_state.draw_canvas()
+        
+    except:
+        # If there's an error with the current file, try to fall back to the last valid file
+        app_state.logger.debug("Could not plot data. Trying to fall back to last valid file.")
+        
+        if hasattr(app_state, 'last_valid_file_path') and app_state.last_valid_file_path:
+            try:
+                # Try to plot the last valid file instead
+                fallback_file_data = {"file_name": os.path.basename(app_state.last_valid_file_path), 
+                                    "file_path": app_state.last_valid_file_path}
+                app_state.display_dict = get_display_data(fallback_file_data, app_state.config)
+                
+                update_plots(app_state.display_dict, app_state, fallback_file_data)
+                ax1, ax2, ax3 = app_state.get_axes()
+                ax1.set_navigate(False)
+
+                # Set original axis ranges for zooming and unzooming
+                original_x_range = (ax1.get_xlim()[0], ax1.get_xlim()[1])
+                app_state.set_original_x_range(original_x_range)
+                original_y_range_ax1 = (ax1.get_ylim()[0], ax1.get_ylim()[1])
+                original_y_range_ax2 = (ax2.get_ylim()[0], ax2.get_ylim()[1])
+                original_y_range_ax3 = (ax3.get_ylim()[0], ax3.get_ylim()[1])
+                app_state.set_original_y_range_ax1(original_y_range_ax1, original_y_range_ax2, original_y_range_ax3)
+
+                # Load and set segmented and classified for the checkboxes
+                hand_segmented = load_recfile(os.path.splitext(fallback_file_data["file_path"])[0] + ".rec")["hand_segmented"]
+                hand_classified = load_recfile(os.path.splitext(fallback_file_data["file_path"])[0] + ".rec")["hand_classified"]
+                app_state.segmented_var.set(str(hand_segmented))
+                app_state.classified_var.set(str(hand_classified))
+
+                app_state.logger.debug("Successfully fell back to last valid file: %s", fallback_file_data["file_name"])
+                app_state.draw_canvas()
+                
+            except Exception as fallback_error:
+                app_state.logger.debug("Failed to fall back to last valid file: %s", str(fallback_error))
+                # If even the fallback fails, just log the error and continue
+        else:
+            app_state.logger.debug("No fallback file available. User will need to manually navigate to a valid file.")
