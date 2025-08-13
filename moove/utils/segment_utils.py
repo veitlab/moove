@@ -100,7 +100,6 @@ def segment_evfuncs(app_state, progressbar, files):
     app_state.resegment_window.destroy()
     messagebox.showinfo("Info", f"Segmentation with Evfuncs completed successfully!")
     app_state.change_file(0)
-    plot_data(app_state)
 
 
 def segment_ml(
@@ -315,7 +314,6 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
 
     # Final UI update
     app_state.change_file(0)
-    plot_data(app_state)
     progressbar.grid_forget()
     app_state.resegment_window.destroy()
     messagebox.showinfo("Info", "Segmentation completed successfully!")

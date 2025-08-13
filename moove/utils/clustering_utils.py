@@ -316,4 +316,4 @@ def replace_labels_from_df(app_state, dataset_name):
     app_state.cluster_window.destroy()
     messagebox.showinfo("Info", "Replacement of syllables complete!")
     app_state.change_file(0)
-    plot_data(app_state)
+
