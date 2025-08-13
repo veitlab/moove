@@ -198,7 +198,9 @@ def filter_segmented_files(files):
 
         if hand_segmented_match.group(1) == '1':
             segment_those_files.append(file)
-
+            
+    print(f"Total segmented files found: {len(segment_those_files)}")
+    
     return segment_those_files
 
 
@@ -216,6 +218,8 @@ def filter_classified_files(files):
         if hand_segmented_match.group(1) == '1':
             classify_those_files.append(file)
 
+    print(f"Total classified files found: {len(classify_those_files)}")
+    
     return classify_those_files
 
 
