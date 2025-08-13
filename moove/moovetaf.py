@@ -335,6 +335,7 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
         logger.info("Not enough data to save")
         return
 
+    logger.info("Saving bout")
     batch_path = os.path.join(save_path, "batch.txt")
 
     with open(batch_path, "r") as file:
@@ -599,7 +600,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
             bout_index2wait = int(seconds_to_index(t_after, chunk_size, frame_rate))
 
         if bout_index2wait == 0:
-            logger.info("Saving bout")
             bout_data_to_save = raw_audio_chunks.copy()
             bout_indexes_waited_copy = bout_indexes_waited
             bout_rec_dt_copy = bout_recdt
@@ -607,7 +607,6 @@ def stream_callback(indata, outdata, frames, time_info, status):
             offsets_copy = offsets.copy()
             pred_syl_list_copy = pred_syl_list.copy()
             wn_recfile_dict_copy = wn_recfile_dict.copy()
-            logger.info("Saving bout")
             # Start a thread to save the bout
             save_thread = threading.Thread(target=save_bout, args=(
             bout_data_to_save, bout_indexes_waited_copy, bout_rec_dt_copy, wn_recfile_dict_copy, onsets_copy,
@@ -803,8 +802,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                             # playback of random stimulus in the playback folder of bird from the config
                                             # file path
                                             file_path = random.choice(list(playback_sounds.keys()))
-                                            play_playback_file(
-                                                playback_sounds, file_path)
+                                            play_playback_file(file_path)
                                             sound_duration = np.round(len(playback_sound) / frame_rate, 3)
                                             logger.info(f"Playback sound is {np.round(sound_duration * 1000, 0)}ms long")
         
