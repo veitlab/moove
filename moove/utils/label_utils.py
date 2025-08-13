@@ -225,6 +225,9 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
     """Perform classification on each file and update labels."""
     from moove.utils import get_display_data, plot_data, save_notmat, seconds_to_index
 
+    # Store the original data_dir to restore it later
+    original_data_dir = app_state.data_dir
+
     input_length, chunk_size = map(int, metadata['input_length'].split(','))
     nperseg, noverlap, nfft = int(metadata['nperseg']), int(metadata['noverlap']), int(metadata['nfft'])
     lowcut, highcut, int_to_label = int(metadata['lowcut']), int(metadata['highcut']), metadata['int_to_label']
@@ -256,6 +259,9 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
 
         file_data["labels"] = ''.join(labels)
         save_notmat(os.path.join(app_state.data_dir, f"{file_data['file_name']}.not.mat"), file_data)
+
+    # Restore the original data_dir so file navigation continues to work
+    app_state.data_dir = original_data_dir
 
     progressbar['value'] = len(all_files)
     app_state.change_file(0)

@@ -283,6 +283,9 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
     """Segment files using a machine learning model in a threaded process."""
     from moove.utils import get_display_data, plot_data, save_notmat
 
+    # Store the original data_dir to restore it later
+    original_data_dir = app_state.data_dir
+
     # extract parameters used for segmentation
     hist_size, chunk_size = int(metadata['hist_size']), int(metadata['chunk_size'])
 
@@ -311,6 +314,9 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
             "labels": "x" * len(onsets)  # Label all segments with 'x'
         })
         save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
+
+    # Restore the original data_dir so file navigation continues to work
+    app_state.data_dir = original_data_dir
 
     # Final UI update
     app_state.change_file(0)

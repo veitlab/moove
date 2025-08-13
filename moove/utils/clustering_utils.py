@@ -284,6 +284,9 @@ def replace_labels_from_df(app_state, dataset_name):
     else:
         messagebox.showinfo("Info", "Replacement of syllables started. This may take a while, please wait!")
 
+    # Store the original data_dir to restore it later
+    original_data_dir = app_state.data_dir
+
     dataset_path = os.path.join(app_state.config['global_dir'], 'cluster_data', f'{dataset_name}.pkl')
     df = pd.read_pickle(dataset_path)
     files = df['file'].unique()
@@ -311,11 +314,14 @@ def replace_labels_from_df(app_state, dataset_name):
         # Save modified labels to the .not.mat file
         save_notmat(save_path, display_dict)
 
+    # Restore the original data_dir so file navigation continues to work
+    app_state.data_dir = original_data_dir
+
     progressbar['value'] = max_value
-    plot_data(app_state)
     progressbar.grid_forget()
     app_state.cluster_window.destroy()
     messagebox.showinfo("Info", "Replacement of syllables complete!")
     app_state.change_file(0)
+    plot_data(app_state)
 
 
