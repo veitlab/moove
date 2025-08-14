@@ -225,7 +225,6 @@ def start_classify_files_thread(app_state, model_name, selection, checkbox_ow, b
 def ml_classify_file(app_state, progressbar, max_value, all_files, model, metadata, device):
     """Perform classification on each file and update labels."""
     from moove.utils import get_display_data, plot_data, save_notmat, seconds_to_index
-    from moove.utils.audio_utils import normalize_spectrogram
 
     # Store the complete original file context to restore it later
     original_data_dir = app_state.data_dir
