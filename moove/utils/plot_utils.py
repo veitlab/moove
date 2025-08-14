@@ -276,6 +276,11 @@ def plot_data(app_state):
         hand_classified = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_classified"]
         app_state.segmented_var.set(str(hand_segmented))
         app_state.classified_var.set(str(hand_classified))
+        app_state.edit_type = "None"
+        
+        # Also reset the GUI radio button selection to "None"
+        if hasattr(app_state, 'reset_edit_type_gui') and app_state.reset_edit_type_gui:
+            app_state.reset_edit_type_gui()
 
         app_state.logger.debug("Recfile loaded and checkboxes updated for file: %s", file_path["file_name"])
 
@@ -315,6 +320,11 @@ def plot_data(app_state):
                 hand_classified = load_recfile(os.path.splitext(fallback_file_data["file_path"])[0] + ".rec")["hand_classified"]
                 app_state.segmented_var.set(str(hand_segmented))
                 app_state.classified_var.set(str(hand_classified))
+                app_state.edit_type = "None"
+                
+                # Also reset the GUI radio button selection to "None"
+                if hasattr(app_state, 'reset_edit_type_gui') and app_state.reset_edit_type_gui:
+                    app_state.reset_edit_type_gui()
 
                 app_state.logger.debug("Successfully fell back to last valid file: %s", fallback_file_data["file_name"])
                 app_state.draw_canvas()

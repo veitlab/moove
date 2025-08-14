@@ -627,6 +627,13 @@ for txt, val in options.items():
 # Center the frame in the root widget
 radio_frame.pack(side=tk.TOP, anchor='center')
 
+def reset_edit_type_selection():
+    """Reset the edit type radio button selection to 'None'"""
+    v.set("1")  # "1" corresponds to "None"
+
+# Connect the GUI reset function to app_state
+app_state.reset_edit_type_gui = reset_edit_type_selection
+
 # Add events to canvas
 canvas.mpl_connect('key_press_event', lambda event: handle_keypress(event, app_state, v))
 canvas.mpl_connect('button_press_event', lambda event: select_event(event, app_state))

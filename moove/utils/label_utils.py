@@ -265,6 +265,7 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
 
     progressbar['value'] = len(all_files)
     app_state.change_file(0)
+    app_state.reset_edit_type()  # This will reset both the internal state and the GUI
     plot_data(app_state)
     progressbar.grid_forget()
     app_state.relabel_window.destroy()

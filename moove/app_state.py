@@ -39,6 +39,7 @@ class AppState:
         self.current_vmin = None
         self.current_vmax = None
         self.combobox = None
+        self.reset_edit_type_gui = None  # Reference to GUI reset function
         self.config = {
             # as given in the config, by default your .moove folder
             'global_dir': global_dir,
@@ -259,6 +260,10 @@ class AppState:
         self.current_file_index = current_file_index
         self.combobox.set(self.song_files[current_file_index])
         self.selected_syllable_index = None
+        self.edit_type = "None"
+        # Also reset the GUI radio button selection
+        if self.reset_edit_type_gui:
+            self.reset_edit_type_gui()
 
     def update_classification_datasets_combobox(self):
         training_data_folder_classification = os.path.join(self.config['global_dir'], "training_data")
@@ -444,3 +449,9 @@ class AppState:
                 self.active_threads.clear()
                 
             self.logger.info("Thread shutdown completed")
+
+    def reset_edit_type(self):
+        """Reset the edit type to 'None' and update the GUI if available"""
+        self.edit_type = "None"
+        if self.reset_edit_type_gui:
+            self.reset_edit_type_gui()
