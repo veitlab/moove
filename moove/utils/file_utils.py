@@ -172,22 +172,72 @@ def get_files_for_day(app_state, bird, experiment, day, batch_file="batch.txt"):
 
 
 def get_files_for_experiment(app_state, bird, experiment, batch_file="batch.txt"):
-    """Return all files for a given experiment of the specified bird."""
+    """Return all files from a batch file for a given experiment of the specified bird."""
     experiment_path = os.path.join(app_state.config['rec_data'], bird, experiment)
     all_files = []
+    
     days = get_directories(experiment_path)
     for day in days:
-        all_files.extend(get_files_for_day(app_state, bird, experiment, day, batch_file))
+        day_path = os.path.join(app_state.config['rec_data'], bird, experiment, day)
+        
+        if batch_file == "All Files":
+            # If "All Files" is selected, take all wav/cbin files from this day
+            files_in_day = [f for f in os.listdir(day_path)
+                            if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
+            for file in files_in_day:
+                full_file_path = os.path.join(day_path, file)
+                all_files.append(full_file_path)
+        else:
+            # Otherwise, read the batch file and only take files listed in it
+            files_in_batch = read_batch(experiment_path, batch_file)
+            files_in_day = [f for f in os.listdir(day_path)
+                            if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
+            
+            # Check which files from this day are in the batch file
+            for file in files_in_day:
+                if file in files_in_batch:
+                    # Add the full path to the file
+                    full_file_path = os.path.join(day_path, file)
+                    all_files.append(full_file_path)
+    
     return all_files
 
 
 def get_files_for_bird(app_state, bird, batch_file="batch.txt"):
-    """Return all files for the specified bird."""
+    """Return all files for the specified bird by reading batch file from bird folder and searching through all experiment and day folders."""
     bird_path = os.path.join(app_state.config['rec_data'], bird)
     all_files = []
+    
+    # Get all experiment folders in the bird folder
     experiments = get_directories(bird_path)
     for experiment in experiments:
-        all_files.extend(get_files_for_experiment(app_state, bird, experiment, batch_file))
+        experiment_path = os.path.join(bird_path, experiment)
+        
+        # Get all day folders in each experiment folder
+        days = get_directories(experiment_path)
+        for day in days:
+            day_path = os.path.join(experiment_path, day)
+            
+            if batch_file == "All Files":
+                # If "All Files" is selected, take all wav/cbin files from this day
+                files_in_day = [f for f in os.listdir(day_path)
+                                if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
+                for file in files_in_day:
+                    full_file_path = os.path.join(day_path, file)
+                    all_files.append(full_file_path)
+            else:
+                # Otherwise, read the batch file and only take files listed in it
+                files_in_batch = read_batch(bird_path, batch_file)
+                files_in_day = [f for f in os.listdir(day_path)
+                                if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
+                
+                # Check which files from this day are in the batch file
+                for file in files_in_day:
+                    if file in files_in_batch:
+                        # Add the full path to the file
+                        full_file_path = os.path.join(day_path, file)
+                        all_files.append(full_file_path)
+    
     return all_files
 
 
