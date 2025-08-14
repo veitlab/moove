@@ -258,7 +258,7 @@ def plot_data(app_state):
     try:
         file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
         app_state.display_dict = get_display_data(file_path, app_state.config)
-
+        
         update_plots(app_state.display_dict, app_state, file_path)
         ax1, ax2, ax3 = app_state.get_axes()
         ax1.set_navigate(False)
@@ -277,10 +277,6 @@ def plot_data(app_state):
         app_state.segmented_var.set(str(hand_segmented))
         app_state.classified_var.set(str(hand_classified))
         app_state.edit_type = "None"
-        
-        # Also reset the GUI radio button selection to "None"
-        if hasattr(app_state, 'reset_edit_type_gui') and app_state.reset_edit_type_gui:
-            app_state.reset_edit_type_gui()
 
         app_state.logger.debug("Recfile loaded and checkboxes updated for file: %s", file_path["file_name"])
 
@@ -289,6 +285,8 @@ def plot_data(app_state):
             app_state.last_valid_file_path = file_path["file_path"]
         else:
             app_state.last_valid_file_path = file_path["file_path"]
+        
+        app_state.reset_edit_type_gui()
 
         app_state.draw_canvas()
         
@@ -321,10 +319,8 @@ def plot_data(app_state):
                 app_state.segmented_var.set(str(hand_segmented))
                 app_state.classified_var.set(str(hand_classified))
                 app_state.edit_type = "None"
-                
-                # Also reset the GUI radio button selection to "None"
-                if hasattr(app_state, 'reset_edit_type_gui') and app_state.reset_edit_type_gui:
-                    app_state.reset_edit_type_gui()
+
+                app_state.reset_edit_type_gui()
 
                 app_state.logger.debug("Successfully fell back to last valid file: %s", fallback_file_data["file_name"])
                 app_state.draw_canvas()

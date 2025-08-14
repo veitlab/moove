@@ -67,6 +67,12 @@ def start_create_cluster_dataset_thread(app_state, dataset_name, use_selected_fi
 def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_files, root):
     """Generate and save a cluster dataset, tracking progress with a progress bar."""
     from moove.utils import get_display_data, seconds_to_index, decibel, plot_data
+    
+    # Store the complete original file context to restore it later
+    original_data_dir = app_state.data_dir
+    original_song_files = app_state.song_files.copy() if app_state.song_files else []
+    original_current_file_index = app_state.current_file_index
+    
     if dataset_name:
         going_prod_df = pd.DataFrame(columns=['file', 'onset_no', 'cluster_flattend_spectrogram', 'label'])
         entry_no = 0
@@ -150,9 +156,13 @@ def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_
         going_prod_df.to_pickle(file_path)
         app_state.update_cluster_datasets_combobox()
 
+    # Restore the complete original file context
+    app_state.data_dir = original_data_dir
+    app_state.song_files = original_song_files
+    app_state.current_file_index = original_current_file_index
+
     progressbar['value'] = max_value
-    app_state.change_file(0)
-    #plot_data(app_state) # seems unnecessary
+    # Don't call change_file(0) as it may cause issues
     progressbar.grid_forget()
     app_state.cluster_window.destroy()
     messagebox.showinfo("Info", f"Cluster dataset '{dataset_name}' created successfully!")
@@ -284,44 +294,41 @@ def replace_labels_from_df(app_state, dataset_name):
     else:
         messagebox.showinfo("Info", "Replacement of syllables started. This may take a while, please wait!")
 
-    # Store the original data_dir to restore it later
+    # Store the complete original file context to restore it later
     original_data_dir = app_state.data_dir
+    original_song_files = app_state.song_files.copy() if app_state.song_files else []
+    original_current_file_index = app_state.current_file_index
 
-    dataset_path = os.path.join(app_state.config['global_dir'], 'cluster_data', f'{dataset_name}.pkl')
+    dataset_path = os.path.join(app_state.config['global_dir'], 'cluster_data', dataset_name)
     df = pd.read_pickle(dataset_path)
-    files = df['file'].unique()
-
-    app_state.logger.debug("Starting replacement of syllables with dataset %s", dataset_name)
-    
-    max_value = len(files)
+    max_value = len(df)
     progressbar = ttk.Progressbar(app_state.cluster_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
-    progressbar.grid(row=999, column=0, columnspan=2, pady=(10, 0), sticky=tk.W + tk.E)
+    progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
 
-    for i, file in enumerate(files):
+    for i, row in df.iterrows():
         progressbar['value'] = i
-        progressbar.update()
-        # Concatenate all the labels for the current file into a single string
-        labels = df.loc[df['file'] == file]['Labels'].astype(str).str.cat(sep='')
-        
-        # Get display data for the current file
-        display_dict = get_display_data({"file_name": os.path.basename(file), "file_path": file}, app_state.config)
-        display_dict["labels"] = labels
+        file_path = row['file_path']
+        app_state.data_dir = os.path.dirname(file_path)
+        display_data = get_display_data({"file_name": os.path.basename(file_path), "file_path": file_path}, app_state.config)
+        display_data.update({
+            "onsets": row['onsets'],
+            "offsets": row['offsets'],
+            "labels": row['labels']
+        })
+        save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
 
-        app_state.data_dir = os.path.dirname(file)
-        save_path = os.path.join(app_state.data_dir, f"{display_dict['file_name']}.not.mat")
-        app_state.logger.debug("Saving labels to %s", save_path)
-        
-        # Save modified labels to the .not.mat file
-        save_notmat(save_path, display_dict)
-
-    # Restore the original data_dir so file navigation continues to work
+    # Restore the complete original file context
     app_state.data_dir = original_data_dir
+    app_state.song_files = original_song_files
+    app_state.current_file_index = original_current_file_index
 
     progressbar['value'] = max_value
     progressbar.grid_forget()
     app_state.cluster_window.destroy()
     messagebox.showinfo("Info", "Replacement of syllables complete!")
-    app_state.change_file(0)
+    
+    # Final UI update
+    app_state.reset_edit_type()
     plot_data(app_state)
 
 

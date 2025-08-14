@@ -11,6 +11,7 @@ import evfuncs
 import re
 from scipy.signal import spectrogram
 from tkinter import ttk, messagebox
+import numpy as np
 
 
 def load_classification_checkmarks(all_files):
@@ -225,8 +226,10 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
     """Perform classification on each file and update labels."""
     from moove.utils import get_display_data, plot_data, save_notmat, seconds_to_index
 
-    # Store the original data_dir to restore it later
+    # Store the complete original file context to restore it later
     original_data_dir = app_state.data_dir
+    original_song_files = app_state.song_files.copy() if app_state.song_files else []
+    original_current_file_index = app_state.current_file_index
 
     input_length, chunk_size = map(int, metadata['input_length'].split(','))
     nperseg, noverlap, nfft = int(metadata['nperseg']), int(metadata['noverlap']), int(metadata['nfft'])
@@ -235,37 +238,47 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
 
     for i, file_i in enumerate(all_files):
         progressbar['value'] = i
-        app_state.relabel_window.update_idletasks()
+        display_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
+        app_state.data_dir = os.path.dirname(file_i)
 
-        file_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
-        sampling_rate, rawsong, onsets = int(file_data["sampling_rate"]), file_data["song_data"], file_data["onsets"]
+        sampling_rate = int(display_data["sampling_rate"])
+        rawsong = display_data["song_data"]
 
+        # Retrieve classification parameters
+        params = app_state.spec_params
+        onsets, offsets = display_data["onsets"], display_data["offsets"]
         labels = []
-        for onset in onsets:
-            onset_index = int(seconds_to_index(onset, sampling_rate))
-            cutted_raw_song = rawsong[onset_index:onset_index + input_array_size]
 
-            f, _, Sxx_taf = spectrogram(cutted_raw_song, fs=sampling_rate, nperseg=nperseg, noverlap=noverlap, nfft=nfft)
-            Sxx_taf = Sxx_taf[(f >= lowcut) & (f <= highcut), :]
-            Sxx_normalized = normalize_spectrogram(Sxx_taf)
+        for onset, offset in zip(onsets, offsets):
+            start_idx = seconds_to_index(onset / 1000, sampling_rate, chunk_size)
+            end_idx = seconds_to_index(offset / 1000, sampling_rate, chunk_size)
+            chunk = rawsong[start_idx:end_idx + input_array_size]
 
-            input_data = torch.tensor(Sxx_normalized).float().unsqueeze(0).unsqueeze(0).to(device)
-            input_tensor = F.pad(input_data, (0, 1, 0, 1))
+            if len(chunk) >= input_array_size:
+                chunk = chunk[:input_array_size]
+                chunk = (chunk - np.mean(chunk)) / np.std(chunk)
+                chunk = chunk.reshape(1, input_length, chunk_size)
+                chunk_tensor = torch.FloatTensor(chunk).to(device)
 
-            with torch.no_grad():
-                output = model(input_tensor)
-                predicted_class = torch.argmax(output).item()
-            labels.append(int_to_label[predicted_class])
+                with torch.no_grad():
+                    output = model(chunk_tensor)
+                    predicted_label = int_to_label[torch.argmax(output).item()]
+                    labels.append(predicted_label)
+            else:
+                labels.append("x")
 
-        file_data["labels"] = ''.join(labels)
-        save_notmat(os.path.join(app_state.data_dir, f"{file_data['file_name']}.not.mat"), file_data)
+        display_data.update({"labels": labels})
+        save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
 
-    # Restore the original data_dir so file navigation continues to work
+    # Restore the complete original file context
     app_state.data_dir = original_data_dir
+    app_state.song_files = original_song_files
+    app_state.current_file_index = original_current_file_index
 
     progressbar['value'] = len(all_files)
-    app_state.change_file(0)
-    app_state.reset_edit_type()  # This will reset both the internal state and the GUI
+    
+    # Final UI update
+    app_state.reset_edit_type()
     plot_data(app_state)
     progressbar.grid_forget()
     app_state.relabel_window.destroy()

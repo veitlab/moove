@@ -69,6 +69,11 @@ def segment_evfuncs(app_state, progressbar, files):
     """Perform segmentation using Evfuncs for each selected file."""
     from moove.utils import get_display_data, plot_data, save_notmat, decibel
 
+    # Store the complete original file context to restore it later
+    original_data_dir = app_state.data_dir
+    original_song_files = app_state.song_files.copy() if app_state.song_files else []
+    original_current_file_index = app_state.current_file_index
+
     for i, file_i in enumerate(files):
         progressbar['value'] = i
         app_state.resegment_window.update_idletasks()
@@ -95,12 +100,16 @@ def segment_evfuncs(app_state, progressbar, files):
 
         save_notmat(os.path.join(app_state.data_dir, file_data["file_name"] + ".not.mat"), file_data)
 
+    # Restore the complete original file context
+    app_state.data_dir = original_data_dir
+    app_state.song_files = original_song_files
+    app_state.current_file_index = original_current_file_index
+
     progressbar['value'] = len(files)
     plot_data(app_state)
     progressbar.grid_forget()
     app_state.resegment_window.destroy()
     messagebox.showinfo("Info", f"Segmentation with Evfuncs completed successfully!")
-    app_state.change_file(0)
 
 
 def segment_ml(
@@ -285,8 +294,10 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
     """Segment files using a machine learning model in a threaded process."""
     from moove.utils import get_display_data, plot_data, save_notmat
 
-    # Store the original data_dir to restore it later
+    # Store the complete original file context to restore it later
     original_data_dir = app_state.data_dir
+    original_song_files = app_state.song_files.copy() if app_state.song_files else []
+    original_current_file_index = app_state.current_file_index
 
     # extract parameters used for segmentation
     hist_size, chunk_size = int(metadata['hist_size']), int(metadata['chunk_size'])
@@ -317,11 +328,29 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
         })
         save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
 
-    # Restore the original data_dir so file navigation continues to work
+    # Restore the complete original file context
     app_state.data_dir = original_data_dir
+    app_state.song_files = original_song_files
+    app_state.current_file_index = original_current_file_index
+
+    # Ensure we have a valid file context for navigation
+    if not app_state.song_files or len(app_state.song_files) == 0:
+        app_state.logger.debug("No song files found, trying to populate from restored directory")
+        try:
+            if os.path.exists(app_state.data_dir):
+                files_in_dir = [f for f in os.listdir(app_state.data_dir) 
+                               if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
+                if files_in_dir:
+                    app_state.song_files = files_in_dir
+                    app_state.current_file_index = 0
+                    app_state.logger.debug(f"Populated song_files with {len(files_in_dir)} files")
+                else:
+                    app_state.logger.debug("No audio files found in restored directory")
+        except Exception as e:
+            app_state.logger.debug(f"Could not populate song_files: {e}")
 
     # Final UI update
-    app_state.change_file(0)
+    app_state.reset_edit_type()
     plot_data(app_state)
     progressbar.grid_forget()
     app_state.resegment_window.destroy()
