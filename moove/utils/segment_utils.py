@@ -96,6 +96,7 @@ def segment_evfuncs(app_state, progressbar, files):
         save_notmat(os.path.join(app_state.data_dir, file_data["file_name"] + ".not.mat"), file_data)
 
     progressbar['value'] = len(files)
+    plot_data(app_state)
     progressbar.grid_forget()
     app_state.resegment_window.destroy()
     messagebox.showinfo("Info", f"Segmentation with Evfuncs completed successfully!")
@@ -272,6 +273,7 @@ def create_segmentation_training_dataset(app_state, progressbar, dataset_name, a
 
     app_state.update_segmentation_datasets_combobox()
     progressbar['value'] = len(all_files)  # Complete progress
+    plot_data(app_state)
     progressbar.grid_forget()
     messagebox.showinfo("Info", "The segmentation training dataset has been created successfully!")
     app_state.training_window.destroy()

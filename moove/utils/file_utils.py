@@ -172,7 +172,7 @@ def get_files_for_day(app_state, bird, experiment, day, batch_file="batch.txt"):
 
 
 def get_files_for_experiment(app_state, bird, experiment, batch_file="batch.txt"):
-    """Return all files from a batch file for a given experiment of the specified bird."""
+    """Return all files for a specific experiment (and batch) of the specified bird."""
     experiment_path = os.path.join(app_state.config['rec_data'], bird, experiment)
     all_files = []
     
@@ -204,7 +204,7 @@ def get_files_for_experiment(app_state, bird, experiment, batch_file="batch.txt"
 
 
 def get_files_for_bird(app_state, bird, batch_file="batch.txt"):
-    """Return all files for the specified bird by reading batch file from bird folder and searching through all experiment and day folders."""
+    """Return all files for a specific bird (and batch) from bird folder."""
     bird_path = os.path.join(app_state.config['rec_data'], bird)
     all_files = []
     
