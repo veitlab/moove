@@ -73,7 +73,10 @@ def get_file_data_by_index(path, song_files, file_index):
     """Retrieve file data by index from the app state."""
     # app_state.logger.debug("Song files: %s", song_files)
     # app_state.logger.debug("File index: %d", file_index)
-    current_file = song_files[file_index]
+    try:
+        current_file = song_files[file_index]
+    except IndexError:
+        current_file = song_files[0]
     # app_state.logger.debug("Current file: %s", current_file)
     
     file_path = os.path.join(os.getcwd(), path, current_file)
