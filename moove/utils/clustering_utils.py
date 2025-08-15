@@ -299,25 +299,34 @@ def replace_labels_from_df(app_state, dataset_name):
     original_song_files = app_state.song_files.copy() if app_state.song_files else []
     original_current_file_index = app_state.current_file_index
 
-    dataset_path = os.path.join(app_state.config['global_dir'], 'cluster_data', dataset_name)
+    dataset_path = os.path.join(app_state.config['global_dir'], 'cluster_data', f'{dataset_name}.pkl')
     df = pd.read_pickle(dataset_path)
-    max_value = len(df)
+    files = df['file'].unique()
+
+    app_state.logger.debug("Starting replacement of syllables with dataset %s", dataset_name)
+
+    max_value = len(files)
     progressbar = ttk.Progressbar(app_state.cluster_window, orient=tk.HORIZONTAL, length=200, mode='determinate', maximum=max_value)
-    progressbar.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky="ew")
+    progressbar.grid(row=999, column=0, columnspan=2, pady=(10, 0), sticky=tk.W + tk.E)
 
-    for i, row in df.iterrows():
+    for i, file in enumerate(files):
         progressbar['value'] = i
-        file_path = row['file_path']
-        app_state.data_dir = os.path.dirname(file_path)
-        display_data = get_display_data({"file_name": os.path.basename(file_path), "file_path": file_path}, app_state.config)
-        display_data.update({
-            "onsets": row['onsets'],
-            "offsets": row['offsets'],
-            "labels": row['labels']
-        })
-        save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
+        progressbar.update()
+        # Concatenate all the labels for the current file into a single string
+        labels = df.loc[df['file'] == file]['Labels'].astype(str).str.cat(sep='')
 
-    # Restore the complete original file context
+        # Get display data for the current file
+        display_dict = get_display_data({"file_name": os.path.basename(file), "file_path": file}, app_state.config)
+        display_dict["labels"] = labels
+
+        app_state.data_dir = os.path.dirname(file)
+        save_path = os.path.join(app_state.data_dir, f"{display_dict['file_name']}.not.mat")
+        app_state.logger.debug("Saving labels to %s", save_path)
+
+        # Save modified labels to the .not.mat file
+        save_notmat(save_path, display_dict)
+
+    # Restore the original data_dir so file navigation continues to work
     app_state.data_dir = original_data_dir
     app_state.song_files = original_song_files
     app_state.current_file_index = original_current_file_index
