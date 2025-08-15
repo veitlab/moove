@@ -44,7 +44,7 @@ def start_segment_evfuncs(app_state, selection, batch_file, bird_combobox, exper
     elif selection == "current_bird":
         files = get_files_for_bird(app_state, bird, batch_file)
     elif selection == "current_file":
-        files = [get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)["file_path"]]
+        files = [get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)["file_path"]]
 
     # Initialize progress bar
     max_value = len(files)
@@ -374,7 +374,7 @@ def start_segment_files_thread(app_state, segmentation_model_name, selection, ch
     elif selection == "current_bird":
         files = get_files_for_bird(app_state, bird, batch_file)
     elif selection == "current_file":
-        files = [get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)["file_path"]]
+        files = [get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)["file_path"]]
 
     # Set up device and load model with metadata
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

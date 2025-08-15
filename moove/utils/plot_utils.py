@@ -256,7 +256,7 @@ def plot_data(app_state):
     from moove.utils.file_utils import get_file_data_by_index, get_display_data
 
     try:
-        file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+        file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)
         app_state.display_dict = get_display_data(file_path, app_state.config)
         
         update_plots(app_state.display_dict, app_state, file_path)

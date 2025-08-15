@@ -88,7 +88,7 @@ def update(app_state):
         
     app_state.logger.info(f"Batch files have been updated.")
 
-    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)
     app_state.batch_combobox['values'] = batch_files
     app_state.song_files = read_batch(app_state.data_dir, app_state.current_batch_file)
     app_state.combobox.set(app_state.song_files[app_state.current_file_index])

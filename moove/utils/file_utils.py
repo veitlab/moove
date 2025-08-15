@@ -69,14 +69,42 @@ def read_batch(day_path, batch_file="batch.txt"):
     return [line.strip() for line in content]
 
 
-def get_file_data_by_index(path, song_files, file_index):
+def remove_line(file_path, rm_line):
+    # read all lines from the file
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # remove the line (strip newline for accurate match)
+    lines = [line for line in lines if line.strip() != rm_line]
+
+    # write the filtered lines back to the file
+    with open(file_path, 'w') as file:
+        file.writelines(lines)
+
+
+def get_file_data_by_index(path, song_files, file_index, app_state):
     """Retrieve file data by index from the app state."""
     # app_state.logger.debug("Song files: %s", song_files)
     # app_state.logger.debug("File index: %d", file_index)
     try:
         current_file = song_files[file_index]
     except IndexError:
+        batch_files = find_batch_files(app_state.data_dir)
+        if current_file in app_state.song_files:
+            # remove file name from song file list
+            app_state.song_files.remove(current_file)
+        # removes file from the current batch
+        remove_line(os.path.join(app_state.data_dir, app_state.current_batch_file), current_file)
+        # removes file from other batch files
+        for batch in batch_files:
+            batch_path = os.path.join(app_state.data_dir, batch)
+            remove_line(batch_path, current_file)
+        app_state.current_file_index = 0
+        print(f"{current_file} not found, entry removed - defaulting to first file.")
         current_file = song_files[0]
+        # check if current file still exists
+        
+
     # app_state.logger.debug("Current file: %s", current_file)
     
     file_path = os.path.join(os.getcwd(), path, current_file)

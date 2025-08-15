@@ -261,7 +261,7 @@ def on_leave(event):
 
 def on_checkbox_toggle():
     """Handle checkbox toggle for saving recfile."""
-    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)
     current_file = os.path.splitext(file_path["file_path"])[0]+".rec"
     segmented = app_state.segmented_var.get()
     classified = app_state.classified_var.get()
@@ -305,18 +305,6 @@ def update_batch_selection(app_state):
 
     app_state.logger.debug(f"Updated batch selection to {selected_batch} with {len(app_state.song_files)} files")
 
-
-def remove_line(file_path, rm_line):
-    # read all lines from the file
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
-    # remove the line (strip newline for accurate match)
-    lines = [line for line in lines if line.strip() != rm_line]
-
-    # write the filtered lines back to the file
-    with open(file_path, 'w') as file:
-        file.writelines(lines)
 
 
 # Create comboboxes
@@ -404,23 +392,9 @@ if app_state.current_file_index is None:
     # start with file 0 if no file index is saved
     app_state.current_file_index = 0
 
-current_file_name = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)[
+current_file_name = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)[
     'file_name']
 full_path = os.path.join(app_state.data_dir, current_file_name)
-
-# check if current file still exists
-if not os.path.exists(full_path):
-    if current_file_name in app_state.song_files:
-        # remove file name from song file list
-        app_state.song_files.remove(current_file_name)
-    # removes file from the current batch
-    remove_line(os.path.join(app_state.data_dir, app_state.current_batch_file), current_file_name)
-    # removes file from other batch files
-    for batch in batch_files:
-        batch_path = os.path.join(app_state.data_dir, batch)
-        remove_line(batch_path, current_file_name)
-    app_state.current_file_index = 0
-    app_state.logger.info(f"{current_file_name} not found, entry removed - defaulting to first file.")
 
 # update batch files with every GUI start
 valid_files = sorted(
@@ -443,7 +417,7 @@ app_state.logger.info(f"Batch files have been updated.")
 
 app_state.song_files = read_batch(app_state.data_dir, app_state.current_batch_file)
 
-file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)
 
 app_state.display_dict = get_display_data(file_path, app_state.config)
 

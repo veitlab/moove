@@ -341,7 +341,7 @@ def confirm_crop(app_state):
     from moove.utils.plot_utils import plot_data
     from moove.utils.movefuncs_utils import save_cbin
 
-    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)
     display_dict = get_display_data(file_path, app_state.config)
 
     ax1 = app_state.ax1
@@ -372,7 +372,7 @@ def confirm_crop(app_state):
         if os.path.exists(os.path.join(app_state.data_dir, file_name[:-4] + ".rec")):
             crop_rec_file(os.path.join(app_state.data_dir, file_name[:-4] + ".rec"), display_dict, x_start, x_end, len(cropped_song_data))
 
-    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index)
+    file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app_state.current_file_index, app_state)
     display_dict = get_display_data(file_path, app_state.config)
 
     app_state.change_file(0)
