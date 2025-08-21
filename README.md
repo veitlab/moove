@@ -41,6 +41,7 @@ PortAudio is typically preinstalled on Windows, so no additional installation is
 Install the PortAudio development library:
 ```bash
 # Debian/Ubuntu
+sudo apt install python-dev-is-python3 gcc
 sudo apt update && sudo apt install portaudio19-dev
 ```
 
