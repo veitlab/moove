@@ -13,77 +13,6 @@ plt.rcParams.update({
 })
 
 
-def get_analysis_fig(app_state, filepath):
-    """Create a figure with three subplots for displaying analysis data."""
-    display_dict = app_state.display_dict
-    file_name = display_dict["file_name"]
-    sampling_rate = display_dict["sampling_rate"]
-    song_data = display_dict["song_data"]
-    freqs = display_dict["freqs"]
-    times = display_dict["times"]
-    spectrogram_data = display_dict["spectrogram_data"]
-    amplitude = display_dict["amplitude"]
-
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 4), gridspec_kw={'height_ratios': [6, 1, 6]},
-                                        sharex=True)  # , dpi=71.94)
-
-    # Filter frequencies based on config
-    valid_freqs = (freqs >= int(app_state.config['lower_spec_plot'])) & (
-                freqs <= int(app_state.config['upper_spec_plot']))
-    filtered_freqs = freqs[valid_freqs]
-    filtered_spectrogram_data = spectrogram_data[valid_freqs, :]
-
-    # calculates the power into amplitudes
-    amplitude_spec = np.sqrt(filtered_spectrogram_data)
-    # amplitude -> dB
-    db_spec = decibel(amplitude_spec)
-
-    # check for catch file
-    catch = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["catch_song"]
-
-    spec = ax1.pcolormesh(times, filtered_freqs, db_spec, shading='gouraud', cmap='jet')
-    if catch == 1:
-        ax1.set_title(file_name + " catch ", color=app_state.text_color)
-    else:
-        ax1.set_title(file_name, color=app_state.text_color)
-    ax1.set_ylabel('Frequency (Hz)', color=app_state.text_color)
-    ax1.set_xlim(times[0], times[-1])
-
-    # Label visualization
-    if "labels" in display_dict:
-        for i, label in enumerate(display_dict["labels"]):
-            label_position = (display_dict["onsets"][i] + display_dict["offsets"][i]) / (2 * 1000)
-            ax2.text(label_position, 0.5, label, ha='center', va='center', clip_on=True)
-        ax2.set_yticks([])
-        ax2.set_xlim(times[0], times[-1])
-
-    # Amplitude plot
-    ax3.plot(np.arange(len(song_data)) / sampling_rate, amplitude)
-    ax3.set_ylabel('Amplitude (dB)', color=app_state.text_color)
-    ax3.set_xlabel('Time (s)', color=app_state.text_color)
-    ax3.set_ylim(amplitude.min(), amplitude.max())
-
-    # Mark onsets and offsets
-    if "onsets" in display_dict and "offsets" in display_dict:
-        bar_height = float(app_state.evfuncs_params['threshold'].get())
-        for onset, offset in zip(display_dict["onsets"], display_dict["offsets"]):
-            onset_sec = onset / 1000
-            offset_sec = offset / 1000
-            ax3.hlines(bar_height, onset_sec, offset_sec, color='black', linewidth=1.5)
-            ax3.plot(onset_sec, bar_height, marker='+', color='black', markersize=10, markeredgewidth=1.5)
-            ax3.plot(offset_sec, bar_height, marker='+', color='black', markersize=10, markeredgewidth=1.5)
-
-    for ax in (ax1, ax2, ax3):
-        ax.tick_params(axis='both', colors=app_state.text_color)
-
-    plt.tight_layout()
-    plt.subplots_adjust(left=0.129, right=0.999, top=0.92, bottom=0.1, hspace=0.1)
-    fig.align_ylabels()
-
-    fig.patch.set_facecolor(app_state.bg_color)
-    return fig
-
-
 def update_plots(display_dict, app_state, filepath):
     """Update plots with new display data."""
     ax1, ax2, ax3 = app_state.get_axes()
@@ -113,8 +42,21 @@ def update_plots(display_dict, app_state, filepath):
 
     # Update ax1 (Spectrogram)
     ax1.clear()
-    app_state.spec = ax1.pcolormesh(display_dict["times"], filtered_freqs, db_spec,
-                                    shading='gouraud', cmap='jet', vmin=vmin, vmax=vmax)
+
+    performance_mode = app_state.config['performance']
+    
+    if performance_mode == "fast":
+        # faster, less detailed drawings
+        extent = [display_dict["times"].min(), display_dict["times"].max(),
+                filtered_freqs.min(), filtered_freqs.max()]
+
+        app_state.spec = ax1.imshow(db_spec, aspect='auto', origin='lower',
+                                    extent=extent, cmap='jet', vmin=vmin, vmax=vmax)
+    else:
+        # slower, more detailed drawing
+        app_state.spec = ax1.pcolormesh(display_dict["times"], filtered_freqs, db_spec,
+                                        shading='gouraud', cmap='jet', vmin=vmin, vmax=vmax)
+
     # get axis position in figure coordinates
     pos = ax2.get_position()
     fig = ax2.figure

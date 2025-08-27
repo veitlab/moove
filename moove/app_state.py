@@ -53,6 +53,7 @@ class AppState:
             'spec_nfft': tk.StringVar(value="1024"),
             'spec_noverlap': tk.StringVar(value="896"),
             'spec_nperseg': tk.StringVar(value="1024"),
+            'performance': tk.StringVar(value = "fast")
         }
         self.evfuncs_params = {
             'threshold': tk.StringVar(value="-50"),

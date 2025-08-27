@@ -20,7 +20,7 @@ from PIL import Image, ImageTk
 # Custom module imports
 from moove.utils import (
     get_display_data, get_directories, read_batch, get_file_data_by_index,
-    save_seg_class_recfile, get_analysis_fig, plot_data, select_event, edit_syllable,
+    save_seg_class_recfile, plot_data, select_event, edit_syllable,
     handle_keypress, zoom, unzoom, swipe_left, swipe_right, handle_playback,
     handle_delete, handle_crop, open_resegment_window, update,
     open_cluster_window, open_training_window, open_relabel_window, find_batch_files,
@@ -130,6 +130,7 @@ app_state.config["vmax_range_slider"] = float(config.get('GUI', 'vmax_range_slid
 app_state.config["spec_nperseg"] = int(config.get('GUI', 'spec_nperseg'))
 app_state.config["spec_noverlap"] = int(config.get('GUI', 'spec_noverlap'))
 app_state.config["spec_nfft"] = int(config.get('GUI', 'spec_nfft'))
+app_state.config["performance"] = str(config.get('GUI', 'performance'))
 
 # Get background color for Tkinter
 tkinter_bg_color = root.cget("bg")
