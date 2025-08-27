@@ -9,6 +9,7 @@ vmax_range_slider = -10
 spec_nperseg = 1024
 spec_noverlap = 896
 spec_nfft = 1024
+performance = fast
 
 [TAF]
 bird_name = bird_x
@@ -53,4 +54,5 @@ offset_window_size = 5
 n_offset_false = 4
 min_syllable_length = 0.03
 min_silent_duration = 0.005
+
 
