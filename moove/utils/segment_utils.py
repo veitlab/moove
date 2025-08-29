@@ -75,30 +75,35 @@ def segment_evfuncs(app_state, progressbar, files):
     original_current_file_index = app_state.current_file_index
 
     for i, file_i in enumerate(files):
-        progressbar['value'] = i
-        app_state.resegment_window.update_idletasks()
-        
-        file_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
-        app_state.data_dir = os.path.dirname(file_i)
+        try:
+            progressbar['value'] = i
+            app_state.resegment_window.update_idletasks()
+            
+            file_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
+            app_state.data_dir = os.path.dirname(file_i)
 
-        # Retrieve segmentation parameters from app_state
-        params = app_state.evfuncs_params
-        threshold, min_syl_dur = float(params['threshold'].get()), float(params['min_syl_dur'].get())
-        min_silent_dur, freq_cutoffs = float(params['min_silent_dur'].get()), tuple(map(int, params['freq_cutoffs'].get().split(',')))
-        smooth_window = int(params['smooth_window'].get())
+            # Retrieve segmentation parameters from app_state
+            params = app_state.evfuncs_params
+            threshold, min_syl_dur = float(params['threshold'].get()), float(params['min_syl_dur'].get())
+            min_silent_dur, freq_cutoffs = float(params['min_silent_dur'].get()), tuple(map(int, params['freq_cutoffs'].get().split(',')))
+            smooth_window = int(params['smooth_window'].get())
 
-        sampling_rate, rawsong = int(file_data["sampling_rate"]), file_data["song_data"]
-        smooth = evfuncs.smooth_data(rawsong, sampling_rate, freq_cutoffs, smooth_window)
-        db_smooth = decibel(smooth)
-        onsets, offsets = evfuncs.segment_song(db_smooth, sampling_rate, threshold, min_syl_dur, min_silent_dur)
+            sampling_rate, rawsong = int(file_data["sampling_rate"]), file_data["song_data"]
+            smooth = evfuncs.smooth_data(rawsong, sampling_rate, freq_cutoffs, smooth_window)
+            db_smooth = decibel(smooth)
+            onsets, offsets = evfuncs.segment_song(db_smooth, sampling_rate, threshold, min_syl_dur, min_silent_dur)
 
-        if onsets is not None and offsets is not None:
-            onsets, offsets = np.multiply(onsets, 1000), np.multiply(offsets, 1000)
-            file_data.update({"onsets": onsets, "offsets": offsets, "labels": "x" * len(onsets)})
-        else:
-            file_data.update({"onsets": np.array([]), "offsets": np.array([]), "labels": ""})
+            if onsets is not None and offsets is not None:
+                onsets, offsets = np.multiply(onsets, 1000), np.multiply(offsets, 1000)
+                file_data.update({"onsets": onsets, "offsets": offsets, "labels": "x" * len(onsets)})
+            else:
+                file_data.update({"onsets": np.array([]), "offsets": np.array([]), "labels": ""})
 
-        save_notmat(os.path.join(app_state.data_dir, file_data["file_name"] + ".not.mat"), file_data)
+            save_notmat(os.path.join(app_state.data_dir, file_data["file_name"] + ".not.mat"), file_data)
+            
+        except Exception as e:
+            app_state.info(f"File {file_i} could not be processed correctly: {e}. Check manually.")
+            return
 
     # Restore the complete original file context
     app_state.data_dir = original_data_dir
@@ -303,30 +308,35 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
     hist_size, chunk_size = int(metadata['hist_size']), int(metadata['chunk_size'])
 
     for i, file_path in enumerate(all_files):
-        progressbar['value'] = i  # Update progress
-        display_data = get_display_data({"file_name": os.path.basename(file_path), "file_path": file_path}, app_state.config)
-        app_state.data_dir = os.path.dirname(file_path)
+        try:
+            progressbar['value'] = i  # Update progress
+            display_data = get_display_data({"file_name": os.path.basename(file_path), "file_path": file_path}, app_state.config)
+            app_state.data_dir = os.path.dirname(file_path)
 
-        sampling_rate = int(display_data["sampling_rate"])
-        rawsong = display_data["song_data"]
+            sampling_rate = int(display_data["sampling_rate"])
+            rawsong = display_data["song_data"]
 
-        # Retrieve segmentation parameters
-        params = app_state.mlseg_params
-        onsets, offsets = segment_ml(
-            model, metadata, device, rawsong, sampling_rate, chunk_size,
-            float(params['decision_threshold'].get()), hist_size,
-            int(params['onset_window_size'].get()), int(params['n_onset_true'].get()),
-            int(params['offset_window_size'].get()), int(params['n_offset_false'].get()),
-            float(params['min_silent_duration'].get()), float(params['min_syllable_length'].get())
-        )
+            # Retrieve segmentation parameters
+            params = app_state.mlseg_params
+            onsets, offsets = segment_ml(
+                model, metadata, device, rawsong, sampling_rate, chunk_size,
+                float(params['decision_threshold'].get()), hist_size,
+                int(params['onset_window_size'].get()), int(params['n_onset_true'].get()),
+                int(params['offset_window_size'].get()), int(params['n_offset_false'].get()),
+                float(params['min_silent_duration'].get()), float(params['min_syllable_length'].get())
+            )
 
-        # Convert onsets and offsets to milliseconds
-        display_data.update({
-            "onsets": np.array(onsets) * 1000,
-            "offsets": np.array(offsets) * 1000,
-            "labels": "x" * len(onsets)  # Label all segments with 'x'
-        })
-        save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
+            # Convert onsets and offsets to milliseconds
+            display_data.update({
+                "onsets": np.array(onsets) * 1000,
+                "offsets": np.array(offsets) * 1000,
+                "labels": "x" * len(onsets)  # Label all segments with 'x'
+            })
+            save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
+            
+        except Exception as e:
+            app_state.info(f"File {file_path} could not be processed correctly: {e}. Check manually.")
+            return
 
     # Restore the complete original file context
     app_state.data_dir = original_data_dir

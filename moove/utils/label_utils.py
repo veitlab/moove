@@ -237,33 +237,37 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
     input_array_size = input_length * chunk_size
 
     for i, file_i in enumerate(all_files):
-        progressbar['value'] = i
-        app_state.relabel_window.update_idletasks()
-        display_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
-        file_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
-        sampling_rate, rawsong, onsets = int(file_data["sampling_rate"]), file_data["song_data"], file_data["onsets"]
-        app_state.data_dir = os.path.dirname(file_i)
+        try:
+            progressbar['value'] = i
+            app_state.relabel_window.update_idletasks()
+            file_data = get_display_data({"file_name": os.path.basename(file_i), "file_path": file_i}, app_state.config)
+            sampling_rate, rawsong, onsets = int(file_data["sampling_rate"]), file_data["song_data"], file_data["onsets"]
+            app_state.data_dir = os.path.dirname(file_i)
 
-        labels = []
+            labels = []
 
-        for onset in onsets:
-            onset_index = int(seconds_to_index(onset, sampling_rate))
-            cutted_raw_song = rawsong[onset_index:onset_index + input_array_size]
+            for onset in onsets:
+                onset_index = int(seconds_to_index(onset, sampling_rate))
+                cutted_raw_song = rawsong[onset_index:onset_index + input_array_size]
 
-            f, _, Sxx_taf = spectrogram(cutted_raw_song, fs=sampling_rate, nperseg=nperseg, noverlap=noverlap, nfft=nfft)
-            Sxx_taf = Sxx_taf[(f >= lowcut) & (f <= highcut), :]
-            Sxx_normalized = normalize_spectrogram(Sxx_taf)
+                f, _, Sxx_taf = spectrogram(cutted_raw_song, fs=sampling_rate, nperseg=nperseg, noverlap=noverlap, nfft=nfft)
+                Sxx_taf = Sxx_taf[(f >= lowcut) & (f <= highcut), :]
+                Sxx_normalized = normalize_spectrogram(Sxx_taf)
 
-            input_data = torch.tensor(Sxx_normalized).float().unsqueeze(0).unsqueeze(0).to(device)
-            input_tensor = F.pad(input_data, (0, 1, 0, 1))
+                input_data = torch.tensor(Sxx_normalized).float().unsqueeze(0).unsqueeze(0).to(device)
+                input_tensor = F.pad(input_data, (0, 1, 0, 1))
 
-            with torch.no_grad():
-                output = model(input_tensor)
-                predicted_class = torch.argmax(output).item()
-            labels.append(int_to_label[predicted_class])
+                with torch.no_grad():
+                    output = model(input_tensor)
+                    predicted_class = torch.argmax(output).item()
+                labels.append(int_to_label[predicted_class])
 
-        file_data["labels"] = ''.join(labels)
-        save_notmat(os.path.join(app_state.data_dir, f"{file_data['file_name']}.not.mat"), file_data)
+            file_data["labels"] = ''.join(labels)
+            save_notmat(os.path.join(app_state.data_dir, f"{file_data['file_name']}.not.mat"), file_data)
+            
+        except Exception as e:
+            app_state.info(f"File {file_i} could not be processed correctly: {e}. Check manually.")
+            return
 
     # Restore the complete original file context
     app_state.data_dir = original_data_dir

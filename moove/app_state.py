@@ -165,7 +165,7 @@ class AppState:
                 'train_segmentation_params': {key: value.get() for key, value in self.train_segmentation_params.items()},
                 'train_classification_params': {key: value.get() for key, value in self.train_classification_params.items()},
             }
-
+            
             # Saves a new .json file in the .moove folder or overwrites the one
             # already existing
             with open(filepath, 'w') as f:
@@ -202,7 +202,7 @@ class AppState:
         self.song_files = state_dict.get('song_files')
         self.current_file_index = state_dict.get('current_file_index')
         self.current_batch_file = state_dict.get('current_batch_file', 'batch')  # Default to 'batch' if not found
-        
+
         for key, value in state_dict.get('evfuncs_params', {}).items():
             self.evfuncs_params[key].set(value)
         for key, value in state_dict.get('mlseg_params', {}).items():

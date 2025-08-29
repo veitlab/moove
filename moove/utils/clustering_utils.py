@@ -310,34 +310,38 @@ def replace_labels_from_df(app_state, dataset_name):
     progressbar.grid(row=999, column=0, columnspan=2, pady=(10, 0), sticky=tk.W + tk.E)
 
     for i, file in enumerate(files):
-        progressbar['value'] = i
-        progressbar.update()
-        # Concatenate all the labels for the current file into a single string
-        labels = df.loc[df['file'] == file]['Labels'].astype(str).str.cat(sep='')
+        try:
+            progressbar['value'] = i
+            progressbar.update()
+            # Concatenate all the labels for the current file into a single string
+            labels = df.loc[df['file'] == file]['Labels'].astype(str).str.cat(sep='')
 
-        # Get display data for the current file
-        display_dict = get_display_data({"file_name": os.path.basename(file), "file_path": file}, app_state.config)
-        display_dict["labels"] = labels
+            # Get display data for the current file
+            display_dict = get_display_data({"file_name": os.path.basename(file), "file_path": file}, app_state.config)
+            display_dict["labels"] = labels
 
-        app_state.data_dir = os.path.dirname(file)
-        save_path = os.path.join(app_state.data_dir, f"{display_dict['file_name']}.not.mat")
-        app_state.logger.debug("Saving labels to %s", save_path)
+            app_state.data_dir = os.path.dirname(file)
+            save_path = os.path.join(app_state.data_dir, f"{display_dict['file_name']}.not.mat")
+            app_state.logger.debug("Saving labels to %s", save_path)
 
-        # Save modified labels to the .not.mat file
-        save_notmat(save_path, display_dict)
+            # Save modified labels to the .not.mat file
+            save_notmat(save_path, display_dict)
+            
+        except Exception as e:
+            app_state.info(f"File {file} could not be processed correctly: {e}. Check manually.")
+            return
 
     # Restore the original data_dir so file navigation continues to work
     app_state.data_dir = original_data_dir
     app_state.song_files = original_song_files
     app_state.current_file_index = original_current_file_index
-
     progressbar['value'] = max_value
-    progressbar.grid_forget()
-    app_state.cluster_window.destroy()
-    messagebox.showinfo("Info", "Replacement of syllables complete!")
     
     # Final UI update
+    progressbar.grid_forget()
+    app_state.cluster_window.destroy()
     app_state.reset_edit_type()
     plot_data(app_state)
+    messagebox.showinfo("Info", "Replacement of syllables complete!")
 
 
