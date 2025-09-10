@@ -325,11 +325,23 @@ def crop_not_mat(file_path, display_dict, x1_border, x2_border):
 def crop_rec_file(file_path, display_dict, x1_border, x2_border, len_cropped_song):
     '''Function to crop a .rec file'''
     from moove.utils.movefuncs_utils import save_recfile, load_recfile
+    import datetime
     recfile_dict = load_recfile(file_path)
 
-    recfile_dict["file_created"] = "Hallo 123"
-
+    recfile_dict["file_created"] = datetime.datetime.now().strftime("%a, %b %d, %Y, %H:%M:%S")
+    recfile_dict["trig_time"] = np.round(recfile_dict["trig_time"]-(x1_border*1000),1)
+    recfile_dict["rec_end"] = int(np.round((x2_border - x1_border) * 1000))
     recfile_dict["samples"] = int(len_cropped_song)
+
+    for feedbackinfo_idx in range(len(recfile_dict["feedback_info"])):
+        new_feedback_triggertime = (recfile_dict["feedback_info"][feedbackinfo_idx][0] - x1_border)*1000
+        coeff, exp = "{:.6E}".format(new_feedback_triggertime).split("E")
+        if recfile_dict["catch_song"] == 1:
+            recfile_dict["feedback_info"][feedbackinfo_idx] = (f"{coeff}E{str(int(exp))}",
+                                                               f"catch # catch_file.wav : Templ = {0}")
+        elif recfile_dict["catch_song"] == 0:
+            recfile_dict["feedback_info"][feedbackinfo_idx] = (f"{coeff}E{str(int(exp))}",
+                                                               f"FB # {recfile_dict['feedback_info'][feedbackinfo_idx][1]} : Templ = {0}")
 
     save_recfile(file_path, recfile_dict)
     return
