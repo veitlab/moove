@@ -329,7 +329,6 @@ def crop_rec_file(file_path, display_dict, x1_border, x2_border, len_cropped_son
     recfile_dict = load_recfile(file_path)
 
     recfile_dict["file_created"] = datetime.datetime.now().strftime("%a, %b %d, %Y, %H:%M:%S")
-    recfile_dict["trig_time"] = np.round(recfile_dict["trig_time"]-(x1_border*1000),1)
     recfile_dict["rec_end"] = int(np.round((x2_border - x1_border) * 1000))
     recfile_dict["samples"] = int(len_cropped_song)
 
