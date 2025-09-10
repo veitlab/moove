@@ -339,7 +339,7 @@ else:
 
 # Experiment combobox
 experiments = sorted(get_directories(os.path.join(app_state.config['rec_data'], bird_combobox.get())))
-experiment_combobox = ttk.Combobox(top_frame, values=experiments)
+experiment_combobox = ttk.Combobox(top_frame, values=experiments, width=30)
 experiment_combobox.pack(side=tk.LEFT)
 experiment_combobox.bind("<<ComboboxSelected>>", lambda _: update_day_combobox())
 if app_state.data_dir:
