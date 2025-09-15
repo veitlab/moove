@@ -356,7 +356,8 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
     # Create feedback info from wn_recfile_dict
     feedback_info = []
     for trigger_time, wn_info in wn_recfile_dict.items():
-        feedback_info.append((trigger_time, wn_info))
+        if trigger_time != "catch_song":  # skip metadata key
+            feedback_info.append((trigger_time, wn_info))
 
     # Save recfile
     channels = 1  # Adjust if necessary
