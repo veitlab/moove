@@ -433,7 +433,7 @@ app_state.combobox.bind('<<ComboboxSelected>>', combobox_selection)
 app_state.combobox.set(app_state.song_files[app_state.current_file_index])
 
 # Dropdown for batch file selection
-batch_combobox = ttk.Combobox(top_frame, values=batch_files, width=15)
+batch_combobox = ttk.Combobox(top_frame, values=batch_files, width=20)
 app_state.batch_combobox = batch_combobox
 app_state.batch_combobox.pack(side=tk.LEFT)
 app_state.batch_combobox.bind('<<ComboboxSelected>>', lambda event: update_batch_selection(app_state))
