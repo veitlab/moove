@@ -425,6 +425,11 @@ def start_create_segmentation_training_dataset(app_state, dataset_name, use_sele
     """Start a threaded process to create a segmentation training dataset."""
     from moove.utils import get_files_for_day, get_files_for_experiment, get_files_for_bird, filter_segmented_files
 
+    font_style = tkFont.Font(family="Arial", size=14)
+    running_label = tk.Label(app_state.training_window, text="Looking for files...", fg="green", font=font_style)
+    running_label.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky=tk.W) 
+    root.update_idletasks() 
+    
     # Retrieve file selection based on user criteria
     bird = bird_combobox.get()
     experiment = experiment_combobox.get()

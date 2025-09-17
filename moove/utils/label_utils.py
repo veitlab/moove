@@ -34,6 +34,11 @@ def load_classification_checkmarks(all_files):
 def start_create_classification_training_dataset(app_state, dataset_name, use_selected_files, selection, batch_file, bird_combobox, experiment_combobox, day_combobox, root):
     """Initialize the creation of a classification training dataset in a new thread."""
     from moove.utils import get_files_for_day, get_files_for_experiment, get_files_for_bird, filter_classified_files
+    
+    font_style = tkFont.Font(family="Arial", size=14)
+    running_label = tk.Label(app_state.training_window, text="Looking for files...", fg="green", font=font_style)
+    running_label.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky=tk.W) 
+    root.update_idletasks() 
 
     bird, experiment, day = bird_combobox.get(), experiment_combobox.get(), day_combobox.get()
     if selection == "current_day":
