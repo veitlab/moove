@@ -445,6 +445,9 @@ def start_create_segmentation_training_dataset(app_state, dataset_name, use_sele
 
     if use_selected_files:
         files = filter_segmented_files(files)
+        
+    running_label.destroy()
+    root.update_idletasks() 
 
     # Initialize and display progress bar
     dataset_name = str(dataset_name)

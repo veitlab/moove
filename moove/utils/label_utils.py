@@ -50,6 +50,9 @@ def start_create_classification_training_dataset(app_state, dataset_name, use_se
 
     if use_selected_files:
         files = filter_classified_files(files)
+        
+    running_label.destroy()
+    root.update_idletasks() 
 
     dataset_name = str(dataset_name)
     # check if dataset name is valid
