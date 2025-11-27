@@ -379,9 +379,9 @@ def save_bout(raw_audio_chunks, bout_indexes_waited, bout_recdt, wn_recfile_dict
 
     template_string = """File created: {{ file_created }}
 
-        begin rec = {{ begin_rec }} ms
-        trig time  = {{ trig_time }} ms
-        rec end = {{ rec_end }} ms
+    begin rec = {{ begin_rec }} ms
+    trig time  = {{ trig_time }} ms
+    rec end = {{ rec_end }} ms
 
 ADFREQ = {{ adfreq }}
 Chans = {{ chans }}
@@ -394,8 +394,8 @@ T After = {{ t_after }}
 Feedback information:
 {% for info in feedback_info %}
 {{ info[0] }} msec: {{ info[1] }}
-{% endfor %}
-    """
+{%- endfor %}
+"""
 
     template = Template(template_string)
     output = template.render(template_vars)

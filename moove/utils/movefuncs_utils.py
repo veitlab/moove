@@ -150,7 +150,7 @@ T After = {{ t_after }}
 Feedback information:
 {% for info in feedback_info %}
 {{ info[0] }} msec: {{ info[1] }}
-{% endfor %}
+{%- endfor %}
 """
     template = Template(template_string)
     output = template.render(recfile_dict)
