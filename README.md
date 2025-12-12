@@ -13,7 +13,7 @@ Moove uses a two-stage architecture: a convolutional-based encoder that segments
 
 ### With pip (recommended)
 
-To install Moove, use pip (Python 3.9 or higher required):
+To install Moove, use pip (Python 3.9 to including Python 3.12):
 
 ```bash
 pip install moove
@@ -106,7 +106,7 @@ To start, simply type `moovegui` or `moovetaf` in the terminal.
 
 ### Requirements
 
-- Python Version: Python 3.9 to Python 3.12
+- Python Version: Python 3.9 to including Python 3.12
 - Audio Hardware: A microphone and speaker setup is required for online targeting experiments.
 
 ### Workflow Overview
@@ -135,7 +135,9 @@ Finally, update the configuration file with the names of the trained segmentatio
 
 For questions, issues, or feedback regarding Moove, please contact:
 
-**Primary contact:**  
+**Primary contact:**
+Lena Veit
+lena.veit@uni-tuebingen.de
 Nils Riekers  
 nils@riekers.it
 
