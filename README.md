@@ -41,10 +41,13 @@ PortAudio is typically preinstalled on Windows, so no additional installation is
 Install the PortAudio development library:
 ```bash
 # Debian/Ubuntu
+python -m venv venv
+source venv/bin/activate
 sudo apt install python-dev-is-python3 gcc
 sudo apt update && sudo apt install portaudio19-dev
 sudo apt-get install python3-tk
 ```
+then install the moove package
 
 #### macOS
 Use Homebrew to install PortAudio:
@@ -60,10 +63,12 @@ ASIO provides the lowest latency, which is critical for Moove's real-time target
 
 - Locate the PortAudio DLL in your `sounddevice` installation. A common path is:
 ```
-C:\Users\<YourUsername>\AppData\Roaming\Python\<YourPythonVersion>\site-packages\sounddevice\portaudio.dll
+C:\Users\<YourUsername>\AppData\Roaming\Python\<YourPythonVersion>\site-packages\_sounddevice_data\portaudio_binaries\libportaudio64bit.dll
+# oder
+C:\Users\<YourUsername>\AppData\Local\Programs\Python\<YourPythonVersion>\Lib\site-packages\_sounddevice_data\portaudio_binaries\libportaudio64bit.dll
 ```
 
-- Backup the existing `portaudio.dll` and replace it with the downloaded ASIO-enabled DLL, renaming it to `portaudio.dll`.
+- Backup the existing `libportaudio64bit.dll` and replace it with the downloaded ASIO-enabled DLL, renaming it to `libportaudio64bit.dll`.
 
 ## Configuration
 
@@ -101,7 +106,7 @@ To start, simply type `moovegui` or `moovetaf` in the terminal.
 
 ### Requirements
 
-- Python Version: Python 3.9 or higher
+- Python Version: Python 3.9 to Python 3.12
 - Audio Hardware: A microphone and speaker setup is required for online targeting experiments.
 
 ### Workflow Overview
@@ -109,7 +114,7 @@ To start, simply type `moovegui` or `moovetaf` in the terminal.
 This section outlines the typical workflow for setting up Moove and conducting experiments:
 
 1.  Baseline Recordings
-Begin with baseline recordings using MooveTaf to capture the bird's songs without targeting. In the configuration file (moove_config.ini), set realtime_classification to False for these recordings. Additionally, set db_threshold for bout detection to define when a sequence starts and ends.
+Begin with baseline recordings using MooveTaf to capture the bird's songs without targeting. In the configuration file (moove_config.ini), set `realtime_classification` to False for these recordings. Additionally, set `dB_threshold` for bout detection to define when a sequence starts and ends.
 
 2.  Manual Segmentation
 In the MooveGUI, use the "ResegmentationWindow" to manually segment recorded songs and adjust the segmentation points as needed.
@@ -124,7 +129,7 @@ Use the "ClusterWindow" in the GUI to label syllable segments. The clusters can 
 With the labeled syllables, use the "TrainingWindow" again to train the classification network based on the assigned labels.
 
 6.  Real-Time Targeting Setup
-Finally, update the configuration file with the names of the trained segmentation and classification networks, set realtime_classification to True, and specify the target syllable for feedback. MooveTaf can now be used for conducting real-time targeting experiments, enabling precise, low-latency feedback during song production.
+Finally, update the configuration file with the names of the trained segmentation and classification networks, set `realtime_classification` to True, and specify the target syllable for feedback. MooveTaf can now be used for conducting real-time targeting experiments, enabling precise, low-latency feedback during song production.
 
 ## Contact
 
