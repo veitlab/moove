@@ -95,7 +95,8 @@ def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_
             }
         else:
             return {"onsets": [], "offsets": []}
-        
+    
+    # Count number of segments given for dataset    
     num_segs = 0
     for file_path in all_files:
         info = get_onset_offset_info(file_path)
@@ -162,11 +163,9 @@ def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_
     app_state.current_file_index = original_current_file_index
 
     progressbar['value'] = max_value
-    # Don't call change_file(0) as it may cause issues
     progressbar.grid_forget()
     app_state.cluster_window.destroy()
     messagebox.showinfo("Info", f"Cluster dataset '{dataset_name}' created successfully!")
-
 
 
 def start_clustering_thread(root, app_state, dataset_name_entry):
