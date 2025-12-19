@@ -58,8 +58,8 @@ bird_name = config.get('TAF', 'bird_name')
 experiment_name = config.get('TAF', 'experiment_name')
 frame_rate = int(config.get('TAF', 'frame_rate'))
 chunk_size = int(config.get('TAF', 'chunk_size'))
-t_before = float(config.get('TAF', 't_before'))  # Already in seconds
-t_after = float(config.get('TAF', 't_after'))  # Already in seconds
+t_before = float(config.get('TAF', 't_before'))  # in seconds
+t_after = float(config.get('TAF', 't_after'))  # in seconds
 min_bout_duration = float(config.get('TAF', 'min_bout_duration'))
 memory_cleanup_interval = int(config.get('TAF', 'memory_cleanup_interval'))
 # Parse input channel configuration (supports single channel or comma-separated channels)
@@ -451,7 +451,7 @@ no_classify_flag_wn_idx2wait = 0
 missing_y_pred_flag = False
 min_silent_index2wait = 0
 min_silent_waited = True
-initialization_complete = False  # New flag to track initialization
+initialization_complete = False  # Flag to track initialization
 
 if realtime_classification:
     y_pred_list = [0] * hist_size
@@ -566,7 +566,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
         elif len(targeted_sequence_list) == 1:
             targeted_sequence = targeted_sequence_list[0]
         else:
-            logger.error("Wrong or no target sequence given")
+            logger.error("Invalid or missing target sequence")
 
         logger.info("Not catch trial flag: %s", not_catch_trial_flag)
         logger.info("Threshold triggered")
@@ -594,7 +594,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
     # Determine if classification is allowed
     classification_allowed = realtime_classification and min_silent_waited and not no_classify_flag_wn
 
-    # If bout_flag ise set, wait for "t_after" seconds of silenc
+    # If bout_flag is set, wait for "t_after" seconds of silence
     if bout_flag:
         bout_indexes_waited += 1
         if smoothed_db > bout_threshold_db:
@@ -689,7 +689,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                 pred_syl_list.pop()
                                 pred_syl_list_for_playback.pop()
                         
-                        # Reset flags for new onset
+                        # Reset flags for new onset and offset
                         onset_flag = False
                         offset_pending = False
                         offset_detected_time = 0
@@ -807,9 +807,9 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                             sound_duration = np.round(len(playback_sound) / frame_rate, 3)
                                             logger.info(f"Playback sound is {np.round(sound_duration * 1000, 0)}ms long")
         
-                                        # add the stimulus to the list so that after the playback the list has an entry
-                                        # for the playback given. It should not compare the last predicted syllables with
-                                        # the target sequence as if nothing happend and play back the stimulus again
+                                        # add the stimulus as entry '-' to the list so after the playback the list has an entry
+                                        # of the playback given. It should not compare the last predicted syllables with
+                                        # the target sequence as if nothing happened and play back the stimulus again
                                         pred_syl_list_for_playback.append('-')
                                         no_classify_flag_wn = True  # wait to classify during playback or white noise
                                         template_value_wn = 0  # Adjust as necessary
@@ -817,7 +817,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                         # no classification during playback or white noise
                                         no_classify_flag_wn_idx2wait = int(
                                             seconds_to_index(sound_duration + trigger_time_offset, chunk_size, frame_rate))
-                                    # writes theoretical playback time into rec file
+                                    # when catch trials, still writes theoretical playback time into rec file
                                     elif not not_catch_trial_flag:
                                         template_value_catch = 0  # Adjust as necessary
                                         wn_recfile_dict[
@@ -950,7 +950,6 @@ def setup_audio_stream(input_device_index, output_device_index):
                                                                                     frame_rate, bandpass_order)
     zi = lfilter_zi(bandpass_numerator_coeffs, bandpass_denominator_coeffs)
 
-    # TODo: why is this here?
     num_samples = int(frame_rate * white_noise_duration)
     white_noise = np.random.randn(num_samples).astype(np.float32)
     audio_buffer = np.zeros((frame_rate,), dtype=np.float32)
