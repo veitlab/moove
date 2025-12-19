@@ -34,7 +34,7 @@ from moove.models.CNN import CNN
 # Global config imports
 from moove.app_state import AppState  # App state management
 
-# avoid key binding conflicts
+# Avoid key binding conflicts
 mpl.rcParams['keymap.yscale'] = ''
 mpl.rcParams['keymap.xscale'] = ''
 
@@ -62,16 +62,19 @@ config.read(config_file_path)
 global_dir = config.get("GENERAL", "global_dir")
 global_dir = os.path.expanduser(global_dir)
 
+# Create subfolders needed for moove in global_dir
 subdirs = ["rec_data", "trained_models", "training_data", "cluster_data", "playbacks"]
 for subdir in subdirs:
     subdir_path = os.path.join(global_dir, subdir)
     os.makedirs(subdir_path, exist_ok=True)
 
+# Load example file if missing
 package_example_data = os.path.join(os.path.dirname(__file__), "example_data", "bird_x")
 target_bird_x_dir = os.path.join(global_dir, "rec_data", "bird_x")
 if not os.path.exists(target_bird_x_dir):
     shutil.copytree(package_example_data, target_bird_x_dir)
 
+# Load example white noise playback if missing
 package_example_data_WN = os.path.join(os.path.dirname(__file__), "example_data", "white_noise")
 target_WN_dir = os.path.join(global_dir, "playbacks", "white_noise")
 if not os.path.exists(target_WN_dir):
@@ -132,9 +135,9 @@ app_state.config["spec_noverlap"] = int(config.get('GUI', 'spec_noverlap'))
 app_state.config["spec_nfft"] = int(config.get('GUI', 'spec_nfft'))
 app_state.config["performance"] = str(config.get('GUI', 'performance'))
 
+
 # Get background color for Tkinter
 tkinter_bg_color = root.cget("bg")
-
 
 # Function to determine text color based on background brightness
 def get_text_color(bg_color):
@@ -143,7 +146,6 @@ def get_text_color(bg_color):
     r, g, b = [x // 256 for x in rgb]
     brightness = (r * 299 + g * 587 + b * 114) / 1000
     return "#ffffff" if brightness < 128 else "#000000"
-
 
 # Save text color and convert background color to hex
 app_state.text_color = get_text_color(tkinter_bg_color)
@@ -215,7 +217,7 @@ def redraw_spectrogram(app_state):
 
 
 # Combobox selection handling
-def combobox_selection(event):
+def combobox_selection():
     """Handle combobox selection."""
     selected_file = app_state.combobox.get()
     app_state.current_file_index = app_state.song_files.index(selected_file)
@@ -224,15 +226,14 @@ def combobox_selection(event):
 
 def on_select(eclick, erelease):
     """Handle the selection event for the spectrogram axes."""
-
+    
     # prevents zoom when the difference between mouse click and release is too small
     # to imply a zoom
     # only zooming in > 5 ms possible
     time_diff_ms = abs(eclick.xdata - erelease.xdata) * 1000
-
     if time_diff_ms < 5:
         return
-
+    
     def set_axes_limits(axis, eclick, erelease):
         """Set x and y limits for the selected axis based on click and release coordinates."""
         if eclick.ydata > erelease.ydata:
@@ -250,12 +251,12 @@ def on_select(eclick, erelease):
 
 
 # Hover and checkbox toggle events
-def on_hover(event):
+def on_hover():
     """Change cursor to cross when hovering over canvas."""
     canvas.get_tk_widget().configure(cursor="tcross")
 
 
-def on_leave(event):
+def on_leave():
     """Reset cursor when leaving the canvas."""
     canvas.get_tk_widget().configure(cursor="")
 
@@ -305,7 +306,6 @@ def update_batch_selection(app_state):
         app_state.canvas.draw()
 
     app_state.logger.debug(f"Updated batch selection to {selected_batch} with {len(app_state.song_files)} files")
-
 
 
 # Create comboboxes
@@ -372,7 +372,7 @@ if app_state.data_dir:
                                          day_combobox.get())
         app_state.data_dir = selected_day_path
         logger.info(f"'{day_name}' not found in birds list — defaulting to first day")
-    # print(path_parts) # debugging message
+    # print(path_parts) # debugging message to check existing folder structure
 else:
     day_combobox.current(0)
     selected_day_path = os.path.join(app_state.config['rec_data'], bird_combobox.get(), experiment_combobox.get(),
@@ -381,7 +381,7 @@ else:
 
 
 batch_files = find_batch_files(selected_day_path)
-# load song files based on the previous or default batch file
+# load song files based on previous or default batch file
 if app_state.current_batch_file in batch_files:
     app_state.song_files = read_batch(selected_day_path, app_state.current_batch_file)
 else:
@@ -423,7 +423,6 @@ file_path = get_file_data_by_index(app_state.data_dir, app_state.song_files, app
 app_state.display_dict = get_display_data(file_path, app_state.config)
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(9, 5.5), gridspec_kw={'height_ratios': [6, 1, 6]}, sharex=True) # added
-#fig = get_analysis_fig(app_state, file_path) # seems unnecessary
 
 # Dropdown menu for file selection
 file_combobox = ttk.Combobox(top_frame, values=app_state.song_files, width=38)
@@ -437,7 +436,7 @@ batch_combobox = ttk.Combobox(top_frame, values=batch_files, width=20)
 app_state.batch_combobox = batch_combobox
 app_state.batch_combobox.pack(side=tk.LEFT)
 app_state.batch_combobox.bind('<<ComboboxSelected>>', lambda event: update_batch_selection(app_state))
-app_state.batch_combobox.set(app_state.current_batch_file)  # open previous used batch file
+app_state.batch_combobox.set(app_state.current_batch_file)  # open previously used batch file
 
 # Create checkboxes for "Segmented" and "Classified"
 classified_var = tk.StringVar(value="0")
