@@ -22,13 +22,7 @@ def save_cbin(filepath, data, sample_freq):
     data = data.astype('>i2')
     
     # Write data to the .cbin file
-    data.tofile(filepath) ### eigentlich filename??? aber ganzer pfad wird gebraucht
-
-    '''
-    # Create corresponding .rec file
-    recfile = filename.with_suffix('.rec')
-    rec_dict = {'sample_freq': sample_freq, 'num_channels': 1}  # Assumption: one channel
-    writerecf(recfile, rec_dict)'''
+    data.tofile(filepath)
 
 
 def save_notmat(filename, notmat_dict):
@@ -40,11 +34,11 @@ def save_notmat(filename, notmat_dict):
             f"Filename should have extension .not.mat but extension was: {filename.suffix}"
         )
 
-    # Konvertiere 'onsets' und 'offsets' Arrays zu floats in Millisekunden
+    # Convert 'onsets' and 'offsets' arrays to floats in ms
     onsets = notmat_dict['onsets'].astype(np.float64)
     offsets = notmat_dict['offsets'].astype(np.float64)
 
-    # Erstellen Sie das Dictionary mit allen erforderlichen Schlüsseln und leeren Werten, falls nötig
+    # Create dictionary with keys and default values if needed
     save_dict = {
         '__header__': notmat_dict['__header__'],
         '__version__': notmat_dict['__version__'],
@@ -60,15 +54,15 @@ def save_notmat(filename, notmat_dict):
         'sm_win': np.float64(notmat_dict['sm_win']) if 'sm_win' in notmat_dict and notmat_dict['sm_win'] else np.array([], dtype=np.float64)
     }
 
-    # Konvertiere den Header in Bytes, falls er noch nicht im richtigen Format vorliegt
+    # Convert header into bytes
     save_dict['__header__'] = np.compat.asbytes(save_dict['__header__'])
 
-    # Speichern der Datei im .mat-Format
+    # Save file as .mat file
     savemat(filename, save_dict, do_compression=True)
  
 
 def load_recfile(file_path):
-    '''Loads a .rec file and returns its contents as a dictionary'''
+    '''Loads a .rec file and returns its contents as a dictionary.'''
     with open(file_path, "r") as f:
         content = f.read()
 
@@ -104,9 +98,6 @@ def load_recfile(file_path):
     # extract feedback information
     feedback_info = []
     for match in feedback_matches:
-        # from IPython import embed
-        # embed()
-        # quit()
         feedback_time = float(match[0])/1000
         trig_pulse = match[2] # can be string or int
         templ = int(match[3])
@@ -132,7 +123,7 @@ def load_recfile(file_path):
 
 
 def save_recfile(file_path, recfile_dict):
-    '''Saves dictionary as a .rec file'''
+    '''Saves dictionary as a .rec file.'''
     template_string = """File created: {{ file_created }}
 
     begin rec = {{ begin_rec }} ms
@@ -161,7 +152,7 @@ Feedback information:
 
 
 def extract_raw_audio(full_audio_data, chunk_size):
-    '''Extracts raw audio data from a full audio file'''
+    '''Extracts raw audio data from a full audio file.'''
     num_full_chunks = len(full_audio_data) // chunk_size
 
     audio_features = [[] for _ in range(chunk_size)]
@@ -174,7 +165,7 @@ def extract_raw_audio(full_audio_data, chunk_size):
 
 
 def play_sound(display_dict, ax1):
-    '''Plays the sound of the displayed data'''
+    '''Plays the sound of the displayed data.'''
     x_start, x_end = ax1.get_xlim()
 
     x1_border = int(x_start * display_dict["sampling_rate"])
@@ -195,7 +186,7 @@ def play_sound(display_dict, ax1):
 
 
 def handle_playback(app_state):
-    '''Function to handle the playback of the displayed data'''
+    '''Function to handle the playback of the displayed data.'''
     display_dict = app_state.display_dict
     ax1 = app_state.ax1
 
@@ -213,11 +204,12 @@ def handle_playback(app_state):
 
 
 def confirm_delete(app_state):
-    ''' Confirm the deletion of the displayed file'''
+    ''' Confirm the deletion of the displayed file.'''
     from moove.utils.plot_utils import plot_data
     current_file = app_state.song_files[app_state.current_file_index]
     working_dir = os.getcwd()
 
+    # Delete all instances of the file
     if current_file[-5:] == ".cbin":
         if os.path.exists(os.path.join(working_dir, app_state.data_dir, current_file + ".not.mat")):
             os.remove(os.path.join(working_dir, app_state.data_dir, current_file + ".not.mat"))
@@ -254,7 +246,7 @@ def confirm_delete(app_state):
 
 
 def handle_delete(app_state):
-    '''Function to handle the deletion of the displayed file'''
+    '''Function to handle the deletion of the displayed file.'''
     import tkinter as tk
     from tkinter import messagebox
     
@@ -271,11 +263,11 @@ def handle_delete(app_state):
         confirm_delete(app_state)
     elif result is False:  # No - Remove from batch only
         remove_from_batch_only(app_state)
-    # result is None (Cancel) - Do nothing
+    # Result is None (Cancel) - Do nothing
 
 
 def remove_from_batch_only(app_state):
-    '''Remove file from current batch but keep it on disk'''
+    '''Remove file from current batch but keep it on disk.'''
     from moove.utils.plot_utils import plot_data
     
     # Remove from song_files list
@@ -299,7 +291,7 @@ def remove_from_batch_only(app_state):
 
 
 def crop_not_mat(file_path, display_dict, x1_border, x2_border):
-    '''Function to crop a .not.mat file'''
+    '''Function to crop a .not.mat file.'''
     onsets = display_dict["onsets"]
     offsets = display_dict["offsets"]
     labels = display_dict["labels"]
@@ -323,7 +315,7 @@ def crop_not_mat(file_path, display_dict, x1_border, x2_border):
 
 
 def crop_rec_file(file_path, display_dict, x1_border, x2_border, len_cropped_song):
-    '''Function to crop a .rec file'''
+    '''Function to crop a .rec file.'''
     from moove.utils.movefuncs_utils import save_recfile, load_recfile
     import datetime
     recfile_dict = load_recfile(file_path)
@@ -332,6 +324,7 @@ def crop_rec_file(file_path, display_dict, x1_border, x2_border, len_cropped_son
     recfile_dict["rec_end"] = int(np.round((x2_border - x1_border) * 1000))
     recfile_dict["samples"] = int(len_cropped_song)
 
+    # Adjust all infos relative to the new cropped time
     for feedbackinfo_idx in range(len(recfile_dict["feedback_info"])):
         new_feedback_triggertime = (recfile_dict["feedback_info"][feedbackinfo_idx][0] - x1_border)*1000
         coeff, exp = "{:.6E}".format(new_feedback_triggertime).split("E")
@@ -347,7 +340,7 @@ def crop_rec_file(file_path, display_dict, x1_border, x2_border, len_cropped_son
 
 
 def confirm_crop(app_state):
-    '''Function to confirm the cropping of the displayed data'''
+    '''Function to confirm the cropping of the displayed data.'''
     from moove.utils.file_utils import get_file_data_by_index, get_display_data
     from moove.utils.plot_utils import plot_data
     from moove.utils.movefuncs_utils import save_cbin
@@ -357,6 +350,7 @@ def confirm_crop(app_state):
 
     ax1 = app_state.ax1
 
+    # Crop x-axis to the selected area
     x_start, x_end = ax1.get_xlim()
     x1_border = int(x_start * display_dict["sampling_rate"])
     x2_border = int(x_end * display_dict["sampling_rate"])
