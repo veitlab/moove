@@ -15,10 +15,11 @@ def get_directories(path):
 
 
 def create_batch_file(data_dir):
+    """Create a default batch.txt file."""
     # scan the directory for .wav and .cbin files
     valid_files = [f for f in os.listdir(data_dir) if f.endswith('.wav') or f.endswith('.cbin')]
 
-    # path to batch file
+    # path to default batch file
     batch_path = os.path.join(data_dir, 'batch.txt')
 
     # open batch file for writing
@@ -31,7 +32,7 @@ def create_batch_file(data_dir):
 
 
 def find_batch_files(day_path):
-    """Find all files in the day directory that match the pattern '.*batch.*' with allowed extensions only"""
+    """Find all files in the day directory that match the pattern '.*batch*.' with allowed extensions only"""
     import re
     
     # Define allowed extensions for batch files
@@ -50,7 +51,7 @@ def find_batch_files(day_path):
             if ext in allowed_extensions:
                 batch_files.append(f)
     
-    # create default batch files if non found/ no 'batch' default found
+    # create default batch files if non found/ no default'batch.txt' found
     if not batch_files:
         create_batch_file(day_path)
         batch_files = ['batch.txt']  # Add the newly created file to the list
@@ -70,6 +71,7 @@ def read_batch(day_path, batch_file="batch.txt"):
 
 
 def remove_line(file_path, rm_line):
+    """Remove line from a given batch file."""
     # read all lines from the file
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -83,9 +85,8 @@ def remove_line(file_path, rm_line):
 
 
 def get_file_data_by_index(path, song_files, file_index, app_state):
-    """Retrieve file data by index from the app state."""
-    # app_state.logger.debug("Song files: %s", song_files)
-    # app_state.logger.debug("File index: %d", file_index)
+    """Retrieve file data by index from the app state.
+       Delete entry from song list and all batch files if song file is missing."""
     try:
         current_file = song_files[file_index]
     except IndexError:
@@ -102,13 +103,9 @@ def get_file_data_by_index(path, song_files, file_index, app_state):
         app_state.current_file_index = 0
         print(f"{current_file} not found, entry removed - defaulting to first file.")
         current_file = song_files[0]
-        # check if current file still exists
-        
-
-    # app_state.logger.debug("Current file: %s", current_file)
-    
+       
     file_path = os.path.join(os.getcwd(), path, current_file)
-    # app_state.logger.debug("File path: %s", file_path)
+
     file_data_dict = {"file_name": current_file, "file_path": file_path}
     return file_data_dict
 
@@ -168,7 +165,6 @@ def get_display_data(file_data_dict, config):
 
 def save_seg_class_recfile(filepath, segmented, classified):
     """Save or update recfile for a specific file"""
-
     try:
         with open(filepath, 'r') as f:
             lines = f.readlines()
@@ -195,9 +191,11 @@ def get_files_for_day(app_state, bird, experiment, day, batch_file="batch.txt"):
     """Return files for a specific day (and batch) within the experiment and bird directory."""
     day_path = os.path.join(app_state.config['rec_data'], bird, experiment, day)
     if batch_file == "All Files":
+        # If "All Files" is selected, take all wav/cbin files from this day
         files = [f for f in os.listdir(day_path)
                  if f.lower().endswith('.wav') or f.lower().endswith('.cbin')]
     else:
+        # Otherwise, read the batch file and only take files listed in it
         files = read_batch(day_path, batch_file)
     return [os.path.join(day_path, f) for f in files]
 
