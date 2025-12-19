@@ -233,7 +233,7 @@ def kill_thread(thread):
 def _async_raise(tid, exctype):
     """Raise the specified exception type in the context of the specified thread."""
     if not isinstance(tid, int):
-        raise TypeError("Thread id must be an integer")
+        raise TypeError("Thread ID must be an integer")
     if not isinstance(exctype, (type, type(None))) or not issubclass(exctype, BaseException):
         raise TypeError("Exception type must be a subclass of BaseException")
     res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid), ctypes.py_object(exctype))
