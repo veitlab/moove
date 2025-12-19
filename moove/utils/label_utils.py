@@ -40,6 +40,7 @@ def start_create_classification_training_dataset(app_state, dataset_name, use_se
     running_label.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky=tk.W) 
     root.update_idletasks() 
 
+    # choose files depending on the user selection
     bird, experiment, day = bird_combobox.get(), experiment_combobox.get(), day_combobox.get()
     if selection == "current_day":
         files = get_files_for_day(app_state, bird, experiment, day, batch_file)
@@ -102,7 +103,6 @@ def create_classification_training_dataset(app_state, progressbar, dataset_name,
     running_label.grid(row=22, column=0, columnspan=2, pady=(10, 0), sticky=tk.W) 
     root.update_idletasks() 
 
-
     def get_onsets(file_path):
         notmat_file = file_path + ".not.mat"
         if os.path.exists(notmat_file):
@@ -110,7 +110,8 @@ def create_classification_training_dataset(app_state, progressbar, dataset_name,
             return notmat_dict.get("onsets", [])
         else:
             return []
-        
+    
+    # Count number of syllable onsets    
     num_onsets = 0
     for i, file_i in enumerate(files):
         working_dir = os.getcwd()
@@ -189,6 +190,7 @@ def start_classify_files_thread(app_state, model_name, selection, checkbox_ow, b
     from moove.utils import get_files_for_day, get_files_for_experiment, get_files_for_bird, get_file_data_by_index
 
     bird, experiment, day = bird_combobox.get(), experiment_combobox.get(), day_combobox.get()
+    # Choose files depending on the user selection
     if selection == "current_day":
         files = get_files_for_day(app_state, bird, experiment, day, batch_file)
     elif selection == "current_experiment":
@@ -254,6 +256,7 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
 
             labels = []
 
+            # Classify syllables in selected files
             for onset in onsets:
                 onset_index = int(seconds_to_index(onset, sampling_rate))
                 cutted_raw_song = rawsong[onset_index:onset_index + input_array_size]
