@@ -276,7 +276,6 @@ def normalize_spectrogram(spectrogram):
     return normalized_spectrogram
 
 
-# change the regular expression comparison with the last syllables recorded
 def check_targeted_sequence(lst, targeted_sequence):
     """Checks if the last elements of lst match the targeted_sequence."""
     recorded_sequence = ''.join(lst)
