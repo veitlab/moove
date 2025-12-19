@@ -37,7 +37,6 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
     def update_batch_combobox_resegment_ev():
         app_state.update_batch_select_combobox_resegment_ev(select_path=ev_selection_var.get())
 
-
     # Radio buttons for Evfuncs selection
     ev_selection_var = tk.StringVar(value="current_file")
     tk.Radiobutton(left_frame, text="Current File", variable=ev_selection_var, value="current_file").grid(row=row, column=0, columnspan=2, sticky="w")
@@ -52,6 +51,7 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
                    command=update_batch_combobox_resegment_ev).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
+    # Combobox for batch file selection
     ev_batch_file_var = tk.StringVar()
     resegment_batch_combobox_ev = ttk.Combobox(left_frame,textvariable=ev_batch_file_var)
     resegment_batch_combobox_ev.set("Select Batch File")
@@ -106,6 +106,7 @@ def open_resegment_window(root, app_state, bird_combobox, experiment_combobox, d
                    command=update_batch_combobox_resegment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
+    # Combobox for batch file selection
     batch_file_var = tk.StringVar()
     resegment_batch_combobox = ttk.Combobox(right_frame,textvariable=batch_file_var)
     resegment_batch_combobox.set("Select Batch File")
@@ -210,6 +211,7 @@ def open_relabel_window(root, app_state, bird_combobox, experiment_combobox, day
                    command=update_batch_combobox_relabel).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
+    # Combobox for batch file selection
     batch_file_var = tk.StringVar()
     relabel_batch_combobox = ttk.Combobox(content_frame,textvariable=batch_file_var, width=5)
     relabel_batch_combobox.set("Select Batch File")
@@ -285,6 +287,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     tk.Checkbutton(left_frame, text="Use segmented files only", variable=use_selected_files_var).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
+    # Radio buttons for selection
     selection_var_segmentation = tk.StringVar(value="current_day")
     tk.Radiobutton(left_frame, text="Current Day", variable=selection_var_segmentation, value="current_day",
                    command=update_batch_combobox_segment).grid(row=row, column=0, columnspan=2, sticky="w")
@@ -295,7 +298,8 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     tk.Radiobutton(left_frame, text="Current Bird", variable=selection_var_segmentation, value="current_bird",
                    command=update_batch_combobox_segment).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
-
+    
+    # Combobox for batch file selection
     batch_file_var = tk.StringVar()
     training_batch_combobox_segmentation = ttk.Combobox(left_frame,textvariable=batch_file_var)
     training_batch_combobox_segmentation.set("Select Batch File")
@@ -344,7 +348,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     checkbox_frame_segmentation = tk.Frame(left_frame)
     checkbox_frame_segmentation.grid(row=row, column=0, columnspan=2, sticky="w")
     tk.Checkbutton(checkbox_frame_segmentation, text="Downsampling", variable=app_state.train_segmentation_params['downsampling']).grid(row=0, column=0, sticky="w")
-    #tk.Checkbutton(checkbox_frame_segmentation, text="QAT", variable=app_state.train_segmentation_params['qat']).grid(row=0, column=2, sticky="w") # make invisible for now
+    #tk.Checkbutton(checkbox_frame_segmentation, text="QAT", variable=app_state.train_segmentation_params['qat']).grid(row=0, column=2, sticky="w") # optional for further usage
     row += 1
 
     segmentation_params = [
@@ -382,6 +386,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
     tk.Checkbutton(right_frame, text="Use classified files only", variable=use_selected_files_var_classification).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
+    # Radio buttons for selection
     selection_var_classification = tk.StringVar(value="current_day")
     tk.Radiobutton(right_frame, text="Current Day", variable=selection_var_classification, value="current_day", 
                    command=update_batch_combobox_class).grid(row=row, column=0, columnspan=2, sticky="w")
@@ -393,6 +398,7 @@ def open_training_window(root, app_state, bird_combobox, experiment_combobox, da
                    command=update_batch_combobox_class).grid(row=row, column=0, columnspan=2, sticky="w")
     row += 1
 
+    # Combobox for batch file selection
     batch_file_var = tk.StringVar()
     training_batch_combobox_classification = ttk.Combobox(right_frame,textvariable=batch_file_var)
     training_batch_combobox_classification.set("Select Batch File")
@@ -514,6 +520,7 @@ def open_cluster_window(root, app_state, bird_combobox, experiment_combobox, day
                    command=update_batch_combobox_cluster).grid(row=row_num, column=0, sticky="w")
     row_num += 1
 
+    # Combobox for batch file selection
     batch_file_var = tk.StringVar()
     cluster_batch_combobox = ttk.Combobox(container_frame,textvariable=batch_file_var)
     cluster_batch_combobox.set("Select Batch File")
