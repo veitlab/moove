@@ -17,11 +17,11 @@ def update_plots(display_dict, app_state, filepath):
     """Update plots with new display data."""
     ax1, ax2, ax3 = app_state.get_axes()
 
-    for ax in (ax1, ax2, ax3):  # added
-        ax.tick_params(axis='both', colors=app_state.text_color)  # added
+    for ax in (ax1, ax2, ax3): 
+        ax.tick_params(axis='both', colors=app_state.text_color) 
 
-    plt.tight_layout()  # added
-    plt.subplots_adjust(left=0.129, right=0.999, top=0.92, bottom=0.1, hspace=0.1)  # added
+    plt.tight_layout() 
+    plt.subplots_adjust(left=0.129, right=0.999, top=0.92, bottom=0.1, hspace=0.1) 
 
     vmin, vmax = app_state.current_vmin, app_state.current_vmax
 
@@ -36,7 +36,7 @@ def update_plots(display_dict, app_state, filepath):
     db_spec = decibel(amplitude_spec)
 
     feedback_time = []
-    # check for catch file
+    # Load info from .rec file
     catch = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["catch_song"]
     feedback_time = load_recfile(os.path.splitext(filepath["file_path"])[0] + ".rec")["feedback_info"]
 
@@ -65,7 +65,7 @@ def update_plots(display_dict, app_state, filepath):
         txt.remove()
     fig.patches = [p for p in fig.patches if not (isinstance(p, patches.Rectangle) and getattr(p, 'is_box', False))]
 
-    # catch trials
+    # Mark catch trials in GUI
     if catch == 1:
         ax1.text(0.0, 1.0, "catch", color='crimson', fontsize=17, transform=ax1.transAxes)
         rect = patches.Rectangle((pos.x0, pos.y0), pos.width, pos.height, linewidth=1,
@@ -73,7 +73,7 @@ def update_plots(display_dict, app_state, filepath):
         rect.is_box = True
         fig.patches.append(rect)
 
-    # trials with feedback visualization
+    # Mark feedback timings
     feedback_timings = []
     if feedback_time:
         for i in range(len(feedback_time)):
@@ -121,9 +121,9 @@ def update_plots(display_dict, app_state, filepath):
 
     app_state.set_axes(ax1, ax2, ax3)
 
-    fig.patch.set_facecolor(app_state.bg_color)  # added
+    fig.patch.set_facecolor(app_state.bg_color) 
 
-    fig.align_ylabels()  # added
+    fig.align_ylabels() 
     app_state.draw_canvas()
 
 
@@ -172,7 +172,7 @@ def update_ax2(ax2, display_dict, app_state):
     ax2.set_yticks([])
     ax2.set_xlim(x_lim)
 
-    # cover up old labels temporarily
+    # Cover up old labels temporarily
     ax2.add_patch(
         plt.Rectangle(
             (x_lim[0], y_lim[0]),
@@ -213,7 +213,7 @@ def plot_data(app_state):
         original_y_range_ax3 = (ax3.get_ylim()[0], ax3.get_ylim()[1])
         app_state.set_original_y_range_ax1(original_y_range_ax1, original_y_range_ax2, original_y_range_ax3)
 
-        # Load and set segmented and classified for the checkboxes
+        # Load and set segmented and classified checkboxes
         hand_segmented = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_segmented"]
         hand_classified = load_recfile(os.path.splitext(file_path["file_path"])[0] + ".rec")["hand_classified"]
         app_state.segmented_var.set(str(hand_segmented))
