@@ -104,7 +104,6 @@ class AppState:
         }
         # Values for segmentation/ classification either 0 or 1
         # By default 0, changes to 1 in the .rec file when ticked in the GUI
-        #self.metadata_file =  os.path.join(global_dir, "metadata.json") # del
         self.segmented_var = tk.StringVar(value="0")
         self.classified_var = tk.StringVar(value="0")
         self.resegment_window = None
