@@ -76,7 +76,7 @@ class AppState:
             'noverlap': tk.StringVar(value="32"),
             'nfft': tk.StringVar(value="128"),
             'freq_cutoffs': tk.StringVar(value="0,22050"),
-            'input_length': tk.StringVar(value="21,64"), # 21/64
+            'input_length': tk.StringVar(value="21,64"), 
         }
         self.umap_k_means_params = {
             'n_neighbors': tk.StringVar(value="15"),
@@ -102,11 +102,9 @@ class AppState:
             'downsampling': tk.BooleanVar(value=True),
             'qat': tk.BooleanVar(value=False)
         }
-        # values for segmentation/ classification either 0 or 1
-        # by default 0, will be changed in the metadata.json 
-        # to 1 if you tick it in the GUI
-        # metadata file is saved in the .moove folder
-        self.metadata_file =  os.path.join(global_dir, "metadata.json")
+        # Values for segmentation/ classification either 0 or 1
+        # By default 0, changes to 1 in the .rec file when ticked in the GUI
+        #self.metadata_file =  os.path.join(global_dir, "metadata.json") # del
         self.segmented_var = tk.StringVar(value="0")
         self.classified_var = tk.StringVar(value="0")
         self.resegment_window = None
@@ -132,13 +130,12 @@ class AppState:
         self.logger.addHandler(handler)
 
     def save_state(self, filename="app_state.json"):
-        # saves the current state of the GUI in a .json file, 
-        # so that it will return to this point when reopened
+        """Saves the current state of the GUI in the app_state.json file"""
         global_dir = self.config['global_dir']
         filepath = os.path.join(global_dir, filename)
 
-        # Ensure the directory exists (should be the .moove folder the data is stored in
-        # and the config is in)
+        # Ensure the directory exists 
+        # (should be the .moove folder where the data and config file is in)
         try:
             os.makedirs(global_dir, exist_ok=True)
             # if there is no .json file yet (e.g. opening the GUI for the first time)
@@ -176,8 +173,7 @@ class AppState:
             self.logger.error(f"Error saving app state to {filepath}: {e}")
 
     def load_state(self, filename="app_state.json"):
-    # loads the previous state of the GUI saved in the app_state.json 
-    # to reopen it at the same position
+        """Loads the previous state of the GUI saved in the app_state.json"""
         global_dir = self.config['global_dir']
         filepath = os.path.join(global_dir, filename)
         # self.logger.info(f"Trying to load state from: {filepath}") # debugging message
