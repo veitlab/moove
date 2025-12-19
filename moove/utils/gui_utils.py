@@ -73,13 +73,17 @@ def update(app_state):
     valid_files = [f for f in os.listdir(app_state.data_dir) if f.endswith('.wav') or f.endswith('.cbin')]
 
     if not batch_files:
+        # create a default batch.txt file with all files
         create_batch_file(os.path.join(app_state.data_dir))
     for batch in batch_files:
         batch_path = os.path.join(app_state.data_dir, batch)
         if batch == 'batch.txt':
+            # write default batch file with all existing wav/cbin files in the folder
             with open(batch_path, 'w') as f:
                 f.write('\n'.join(valid_files))
         else:
+            # for other batch files keep selection of files,
+            # but delete non-existing file entries
             with open(batch_path, 'r') as batch_open:
                 keep_files = batch_open.read().splitlines()
             filtered_files = [f for f in keep_files if f in valid_files]
