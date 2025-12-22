@@ -217,7 +217,7 @@ def redraw_spectrogram(app_state):
 
 
 # Combobox selection handling
-def combobox_selection():
+def combobox_selection(event):
     """Handle combobox selection."""
     selected_file = app_state.combobox.get()
     app_state.current_file_index = app_state.song_files.index(selected_file)
@@ -251,12 +251,12 @@ def on_select(eclick, erelease):
 
 
 # Hover and checkbox toggle events
-def on_hover():
+def on_hover(event):
     """Change cursor to cross when hovering over canvas."""
     canvas.get_tk_widget().configure(cursor="tcross")
 
 
-def on_leave():
+def on_leave(event):
     """Reset cursor when leaving the canvas."""
     canvas.get_tk_widget().configure(cursor="")
 
