@@ -131,6 +131,8 @@ With the labeled syllables, use the "TrainingWindow" again to train the classifi
 6.  Real-Time Targeting Setup
 Finally, update the configuration file with the names of the trained segmentation and classification networks, set `realtime_classification` to True, and specify the target syllable for feedback. MooveTaf can now be used for conducting real-time targeting experiments, enabling precise, low-latency feedback during song production.
 
+A preliminary version of a guide on how to use Moove is available on request. The finished version will be made available soon.
+
 ## Contact
 
 For questions, issues, or feedback regarding Moove, please contact:
