@@ -2787,7 +2787,7 @@ description = "A language and compiler for custom Deep Learning operations"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "platform_machine == \"x86_64\" and platform_system == \"Linux\" and python_version < \"3.13\""
+markers = "platform_machine == \"x86_64\" and platform_system == \"Linux\""
 files = [
     {file = "triton-3.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b0dd10a925263abbe9fa37dcde67a5e9b2383fc269fdf59f5657cac38c5d1d8"},
     {file = "triton-3.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0f34f6e7885d1bf0eaaf7ba875a5f0ce6f3c13ba98f9503651c1e6dc6757ed5c"},
@@ -3048,5 +3048,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.9"
-content-hash = "223f863451c65da33562d26e4faa4bd6c98033debea27bb575a44fedd4a33e6f"
+python-versions = ">=3.9,<3.13"
+content-hash = "55c750eb1afea563f4a94bd83464102b2f937420b310967eb724242b95ae824c"

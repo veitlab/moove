@@ -17,8 +17,11 @@ To install Moove, use pip (Python 3.9 to including Python 3.12):
 
 ```bash
 pip install moove
-# pre release:
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple moove==1.0.0
+```
+
+For a specific version:
+```bash
+pip install moove==1.0.0
 ```
 
 After installing, a default configuration file (moove_config.ini) will be available at ~/.moove/. This configuration file should be adjusted to fit your experiment setup.
