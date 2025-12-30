@@ -171,8 +171,12 @@ def create_classification_training_dataset(app_state, progressbar, dataset_name,
     app_state.update_classification_datasets_combobox()
     progressbar['value'] = len(files)
     progressbar.grid_forget()
-    messagebox.showinfo("Info", "Classification training dataset has been created successfully!")
-    app_state.training_window.destroy()
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", "Classification training dataset has been created successfully!")
+    
+    root.after(0, show_message)
 
     first_index = going_prod_df.index[0]
     shape_first_entry = pd.DataFrame(going_prod_df.loc[first_index, 'taf_unflattend_spectrogram']).shape
@@ -291,5 +295,9 @@ def ml_classify_file(app_state, progressbar, max_value, all_files, model, metada
     app_state.reset_edit_type()
     plot_data(app_state)
     progressbar.grid_forget()
-    app_state.relabel_window.destroy()
-    messagebox.showinfo("Info", f"Relabeling of files completed successfully!")
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", f"Relabeling of files completed successfully!")
+    
+    app_state.relabel_window.after(0, show_message)

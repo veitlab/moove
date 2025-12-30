@@ -164,8 +164,12 @@ def create_cluster_dataset(app_state, dataset_name, progressbar, max_value, all_
 
     progressbar['value'] = max_value
     progressbar.grid_forget()
-    app_state.cluster_window.destroy()
-    messagebox.showinfo("Info", f"Cluster dataset '{dataset_name}' created successfully!")
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", f"Cluster dataset '{dataset_name}' created successfully!")
+    
+    root.after(0, show_message)
 
 
 def start_clustering_thread(root, app_state, dataset_name_entry):
@@ -221,7 +225,7 @@ def run_clustering(root, app_state, dataset_name):
     # Map numerical labels to alphabetic characters
     label_mapping = {i: chr(97 + i) for i in range(n_syllables)}
     alphabet_labels = [label_mapping[label] for label in labels]
-    df['Labels'] = alphabet_labels
+    df['clustered_label'] = alphabet_labels
 
     # Add UMAP coordinates to the DataFrame
     df['UMAP1'] = low_dimensional_data[:, 0]
@@ -235,10 +239,14 @@ def run_clustering(root, app_state, dataset_name):
     plot_clusters(root, app_state, low_dimensional_data, alphabet_labels, output_path)
 
     running_label.destroy()
-    app_state.cluster_window.destroy()
 
     app_state.logger.debug("Clustering complete. Results saved to %s", output_path)
-    messagebox.showinfo("Info", f"Clustering complete! Results saved to {output_path}")
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", f"Clustering complete! Results saved to {output_path}")
+    
+    root.after(0, show_message)
 
 
 def plot_clusters(root, app_state, low_dimensional_data, labels, output_path):
@@ -282,7 +290,7 @@ def plot_clusters(root, app_state, low_dimensional_data, labels, output_path):
     root.after(0, plot)
 
 
-def replace_labels_from_df(app_state, dataset_name):
+def replace_labels_from_df(app_state, dataset_name, root=None):
     """Replace labels in the dataset based on clustering results."""
     from moove.utils.file_utils import get_display_data
     from moove.utils.movefuncs_utils import save_notmat
@@ -312,8 +320,11 @@ def replace_labels_from_df(app_state, dataset_name):
         try:
             progressbar['value'] = i
             progressbar.update()
-            # Concatenate all the labels for the current file into a single string
-            labels = df.loc[df['file'] == file]['Labels'].astype(str).str.cat(sep='')
+            # Concatenate all the clustered labels for the current file into a single string
+            # Only use clustered_label (from clustering/Dash), not the original 'label' column
+            if 'clustered_label' not in df.columns:
+                raise KeyError("Dataset has not been clustered yet. Please cluster the dataset first before replacing labels.")
+            labels = df.loc[df['file'] == file]['clustered_label'].astype(str).str.cat(sep='')
 
             # Get display data for the current file
             display_dict = get_display_data({"file_name": os.path.basename(file), "file_path": file}, app_state.config)
@@ -327,7 +338,7 @@ def replace_labels_from_df(app_state, dataset_name):
             save_notmat(save_path, display_dict)
             
         except Exception as e:
-            app_state.info(f"File {file} could not be processed correctly: {e}. Check manually.")
+            app_state.logger.error(f"File {file} could not be processed correctly: {e}. Check manually.")
             return
 
     # Restore the original data_dir so file navigation continues to work
@@ -338,9 +349,15 @@ def replace_labels_from_df(app_state, dataset_name):
     
     # Final UI update
     progressbar.grid_forget()
-    app_state.cluster_window.destroy()
     app_state.reset_edit_type()
     plot_data(app_state)
-    messagebox.showinfo("Info", "Replacement of syllables complete!")
+    
+    # Schedule Tkinter operations in the main thread if root is available
+    if root:
+        def show_message():
+            messagebox.showinfo("Info", "Replacement of syllables complete!")
+        root.after(0, show_message)
+    else:
+        messagebox.showinfo("Info", "Replacement of syllables complete!")
 
 

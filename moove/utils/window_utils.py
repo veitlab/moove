@@ -601,7 +601,7 @@ def open_cluster_window(root, app_state, bird_combobox, experiment_combobox, day
     # Button to replace labels
     tk.Button(
         container_frame, text="Replace Labels",
-        command=lambda: replace_labels_from_df(app_state, remove_pkl_suffix(cluster_dataset_var.get()))
+        command=lambda: replace_labels_from_df(app_state, remove_pkl_suffix(cluster_dataset_var.get()), root)
     ).grid(row=row_num, column=0, columnspan=2, pady=(10, 0), sticky="ew")
 
     # Adjust window size to content

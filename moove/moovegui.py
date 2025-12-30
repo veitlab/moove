@@ -114,7 +114,7 @@ try:
     if icon_image:
         icon_photo = ImageTk.PhotoImage(icon_image)
         root.iconphoto(True, icon_photo)
-        logger.info(f"Window icon set successfully ({icon_path if os.path.exists(icon_path) else fallback_path})")
+        logger.debug(f"Window icon set successfully ({icon_path if os.path.exists(icon_path) else fallback_path})")
     else:
         logger.warning("No icon files found in templates directory")
 except Exception as e:

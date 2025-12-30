@@ -9,11 +9,24 @@ import string
 import threading
 import os
 import webbrowser
+import logging
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from flask import Flask
-from wsgiref.simple_server import make_server
+from wsgiref.simple_server import make_server, WSGIRequestHandler
 from tkinter import ttk, messagebox
+
+# Suppress Flask/Werkzeug/Dash logging to reduce console output
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('flask').setLevel(logging.ERROR)
+logging.getLogger('dash').setLevel(logging.ERROR)
+
+
+class QuietWSGIRequestHandler(WSGIRequestHandler):
+    """Custom request handler that suppresses HTTP request logging."""
+    def log_message(self, format, *args):
+        """Override to suppress all HTTP request logs."""
+        pass  # Do nothing - suppress all logs
 
 # Global variables to store labels and point size
 labels = None
@@ -28,7 +41,10 @@ def run_flask_server(app_state, dataset_name):
 
     global labels, point_size
     df = pd.read_pickle(os.path.join(app_state.config['global_dir'], 'cluster_data', f'{dataset_name}.pkl'))
-    labels = df['Labels'].values
+    # Use clustered_label (created after clustering/Dash editing)
+    if 'clustered_label' not in df.columns:
+        raise KeyError("Dataset has not been clustered yet. Please cluster the dataset first.")
+    labels = df['clustered_label'].values
     low_dimensional_data = df[['UMAP1', 'UMAP2']].values
 
     unique_labels = list(string.ascii_lowercase)
@@ -173,7 +189,7 @@ def run_flask_server(app_state, dataset_name):
     def save_labels(n_clicks):
         """Save the updated labels to the dataset file and show popup notification."""
         global labels
-        df['Labels'] = labels
+        df['clustered_label'] = labels
         df.to_pickle(os.path.join(app_state.config['global_dir'], 'cluster_data', f'{dataset_name}.pkl'))
         
         # Show Tkinter popup message instead of Dash message
@@ -186,7 +202,7 @@ def run_flask_server(app_state, dataset_name):
         return html.Div()
 
     app_state.logger.debug(f"Starting Flask server for dataset: {dataset_name}")
-    app_state.server = make_server('localhost', 8050, server)
+    app_state.server = make_server('localhost', 8050, server, handler_class=QuietWSGIRequestHandler)
     app_state.server_thread = threading.Thread(target=app_state.server.serve_forever, name="DashServerThread")
     
     # Register the server thread

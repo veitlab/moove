@@ -102,7 +102,7 @@ def segment_evfuncs(app_state, progressbar, files):
             save_notmat(os.path.join(app_state.data_dir, file_data["file_name"] + ".not.mat"), file_data)
             
         except Exception as e:
-            app_state.info(f"File {file_i} could not be processed correctly: {e}. Check manually.")
+            app_state.logger.error(f"File {file_i} could not be processed correctly: {e}. Check manually.")
             return
 
     # Restore the complete original file context
@@ -113,8 +113,12 @@ def segment_evfuncs(app_state, progressbar, files):
     progressbar['value'] = len(files)
     plot_data(app_state)
     progressbar.grid_forget()
-    app_state.resegment_window.destroy()
-    messagebox.showinfo("Info", f"Segmentation with Evfuncs completed successfully!")
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", f"Segmentation with Evfuncs completed successfully!")
+    
+    app_state.resegment_window.after(0, show_message)
 
 
 def segment_ml(
@@ -289,9 +293,13 @@ def create_segmentation_training_dataset(app_state, progressbar, dataset_name, a
     progressbar['value'] = len(all_files)  # Complete progress
     plot_data(app_state)
     progressbar.grid_forget()
-    messagebox.showinfo("Info", "The segmentation training dataset has been created successfully!")
-    app_state.training_window.destroy()
-    app_state.change_file(0)
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", "The segmentation training dataset has been created successfully!")
+        app_state.change_file(0)
+    
+    root.after(0, show_message)
     
 
 
@@ -335,7 +343,7 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
             save_notmat(os.path.join(app_state.data_dir, display_data["file_name"] + ".not.mat"), display_data)
             
         except Exception as e:
-            app_state.info(f"File {file_path} could not be processed correctly: {e}. Check manually.")
+            app_state.logger.error(f"File {file_path} could not be processed correctly: {e}. Check manually.")
             return
 
     # Restore the complete original file context
@@ -363,8 +371,12 @@ def segment_files_ml(app_state, progressbar, all_files, model, metadata, device)
     app_state.reset_edit_type()
     plot_data(app_state)
     progressbar.grid_forget()
-    app_state.resegment_window.destroy()
-    messagebox.showinfo("Info", "Segmentation completed successfully!")
+    
+    # Schedule Tkinter operations in the main thread
+    def show_message():
+        messagebox.showinfo("Info", "Segmentation completed successfully!")
+    
+    app_state.resegment_window.after(0, show_message)
 
 
 def start_segment_files_thread(app_state, segmentation_model_name, selection, checkbox_ow, batch_file, bird_combobox, experiment_combobox, day_combobox):
