@@ -1,6 +1,6 @@
 
 <div style="background-color: white; padding: 10px; display: inline-block;">
-    <img src="assets/logo_white_bg.png" alt="Moove Logo" width="250">
+    <img src="https://raw.githubusercontent.com/veitlab/moove/main/assets/logo_white_bg.png" alt="Moove Logo" width="250">
 </div>
 
 # Moove
@@ -26,12 +26,24 @@ pip install moove==1.0.0
 
 After installing, a default configuration file (moove_config.ini) will be available at ~/.moove/. This configuration file should be adjusted to fit your experiment setup.
 
+**Note:** If you encounter issues with the GUI not displaying correctly after installation, try using Python 3.11 with Tkinter installed. On macOS, you may need to install Python 3.11 separately (e.g., via Homebrew) and ensure Tkinter support is available.
+
 ### With poetry
 
-Alternatively, poetry can be used:
+Alternatively, poetry can be used for development or as an alternative installation method:
+
 ```bash
 poetry install
 ```
+
+To run Moove with poetry:
+```bash
+poetry run moovegui
+# or
+poetry run moovetaf
+```
+
+This method is particularly useful if you encounter issues with the pip-installed version, as it runs the code directly from the source directory.
 
 ### PortAudio Installation
 
@@ -107,10 +119,42 @@ Once installed, Moove offers two main entry points for operation:
 
 To start, simply type `moovegui` or `moovetaf` in the terminal.
 
+**Alternative:** If you installed Moove using poetry, you can run it with:
+```bash
+poetry run moovegui
+# or
+poetry run moovetaf
+```
+
 ### Requirements
 
 - Python Version: Python 3.9 to including Python 3.12
 - Audio Hardware: A microphone and speaker setup is required for online targeting experiments.
+
+### Troubleshooting
+
+**GUI not displaying correctly after pip install:**
+
+If the GUI window opens but appears empty (no plots visible), try the following:
+
+1. **Use Python 3.11 with Tkinter:** Install Python 3.11 separately and ensure Tkinter support is available:
+   ```bash
+   # macOS (using Homebrew)
+   brew install python@3.11
+   python3.11 -m pip install moove
+   python3.11 -m moovegui
+   ```
+
+2. **Use Poetry instead:** Poetry often resolves environment issues:
+   ```bash
+   poetry install
+   poetry run moovegui
+   ```
+
+3. **Check Tkinter installation:** Verify that Tkinter is properly installed:
+   ```bash
+   python3 -c "import tkinter; print('Tkinter is available')"
+   ```
 
 ### Workflow Overview
 
