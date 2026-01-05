@@ -1,6 +1,6 @@
 [project]
 name = "moove"
-version = "1.0.0"
+version = "1.0.0.post1"
 description = "A tool for real-time syllable segmentation and classification of birdsong, designed to enable closed-loop experiments in vocal learning research."
 readme = "README.md"
 license = {text = "MIT"}
