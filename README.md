@@ -26,7 +26,7 @@ pip install moove==1.0.0
 
 After installing, a default configuration file (moove_config.ini) will be available at ~/.moove/. This configuration file should be adjusted to fit your experiment setup.
 
-**Note:** If you encounter issues with the GUI not displaying correctly after installation, try using Python 3.11 with Tkinter installed. On macOS, you may need to install Python 3.11 separately (e.g., via Homebrew) and ensure Tkinter support is available. Moove requires a numpy version < 2.0 and torch version < 2.6. Unless you are using poetry which automatically keeps track of version requirements (see below), make sure to install the correct version.
+**Note:** If you encounter issues with the GUI not displaying correctly after installation, try using Python 3.11 with Tkinter installed. On macOS, you may need to install Python 3.11 separately (e.g., via Homebrew) and ensure Tkinter support is available.
 
 ### With poetry
 
@@ -129,6 +129,8 @@ poetry run moovetaf
 ### Requirements
 
 - Python Version: Python 3.9 to including Python 3.12
+- Numpy Version: Numpy < 2.0
+- Torch Version: Torch < 2.6
 - Audio Hardware: A microphone and speaker setup is required for online targeting experiments.
 
 ### Troubleshooting
