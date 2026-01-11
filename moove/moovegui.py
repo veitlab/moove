@@ -432,7 +432,7 @@ app_state.combobox.bind('<<ComboboxSelected>>', combobox_selection)
 app_state.combobox.set(app_state.song_files[app_state.current_file_index])
 
 # Dropdown for batch file selection
-batch_combobox = ttk.Combobox(top_frame, values=batch_files, width=20)
+batch_combobox = ttk.Combobox(top_frame, values=batch_files, width=30)
 app_state.batch_combobox = batch_combobox
 app_state.batch_combobox.pack(side=tk.LEFT)
 app_state.batch_combobox.bind('<<ComboboxSelected>>', lambda event: update_batch_selection(app_state))
@@ -507,13 +507,21 @@ rect_selector_ax1 = RectangleSelector(ax1, on_select, useblit=True,
                                       button=[1],  # Left mouse button
                                       minspanx=30, minspany=30,
                                       spancoords='pixels',
-                                      interactive=False)
+                                      interactive=False,
+                                      state_modifier_keys={
+                                      "rotate": "",     # deactivate r binding
+                                      },
+)
 
 rect_selector_ax3 = RectangleSelector(ax3, on_select, useblit=True,
                                       button=[1],  # Left mouse button
                                       minspanx=30, minspany=30,
                                       spancoords='pixels',
-                                      interactive=False)
+                                      interactive=False,
+                                      state_modifier_keys={
+                                      "rotate": "",     # deactivate r binding
+                                      },
+)
 
 # Update button
 center_frame = tk.Frame(root)
