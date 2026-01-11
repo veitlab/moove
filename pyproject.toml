@@ -1,13 +1,13 @@
 [project]
 name = "moove"
-version = "1.0.0.post1"
+version = "1.0.1"
 description = "A tool for real-time syllable segmentation and classification of birdsong, designed to enable closed-loop experiments in vocal learning research."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "Nils Riekers"},
     {name = "Franziska Heubach"},
-    {name = "Jacqueline Goebl"},
+    {name = "Jacqueline Laura Goebl"},
     {name = "Lena Veit"}
 ]
 requires-python = ">=3.9,<3.13"
