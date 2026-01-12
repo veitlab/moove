@@ -187,8 +187,10 @@ A preliminary version of a guide on how to use Moove is available on request. Th
 For questions, issues, or feedback regarding Moove, please contact:
 
 **Primary contact:**
+
 Lena Veit
 lena.veit@uni-tuebingen.de
+
 Nils Riekers  
 nils@riekers.it
 
