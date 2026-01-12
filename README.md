@@ -74,8 +74,6 @@ brew install portaudio
 
 ASIO provides the lowest latency, which is critical for Moove's real-time targeting capabilities. To enable ASIO support in `sounddevice`, replace the default PortAudio DLL with an ASIO-enabled version.
 
-- Find an ASIO-enabled PortAudio DLL from a trusted source, such as [this one](https://github.com/spatialaudio/portaudio-binaries).
-
 - Locate the PortAudio DLL in your `sounddevice` installation. A common path is:
 ```
 C:\Users\<YourUsername>\AppData\Roaming\Python\<YourPythonVersion>\site-packages\_sounddevice_data\portaudio_binaries\libportaudio64bit.dll
@@ -83,7 +81,7 @@ C:\Users\<YourUsername>\AppData\Roaming\Python\<YourPythonVersion>\site-packages
 C:\Users\<YourUsername>\AppData\Local\Programs\Python\<YourPythonVersion>\Lib\site-packages\_sounddevice_data\portaudio_binaries\libportaudio64bit.dll
 ```
 
-- Backup the existing `libportaudio64bit.dll` and replace it with the downloaded ASIO-enabled DLL, renaming it to `libportaudio64bit.dll`.
+- Backup the existing `libportaudio64bit.dll` and replace it with the ASIO-enabled DLL, renaming the `libportaudio64bit-asio.dll` to `libportaudio64bit.dll`.
 
 ## Configuration
 
@@ -188,11 +186,9 @@ For questions, issues, or feedback regarding Moove, please contact:
 
 **Primary contact:**
 
-Lena Veit
-lena.veit@uni-tuebingen.de
+Lena Veit: lena.veit@uni-tuebingen.de
 
-Nils Riekers  
-nils@riekers.it
+Nils Riekers: nils@riekers.it
 
 ## License
 
