@@ -21,7 +21,7 @@ pip install moove
 
 For a specific version:
 ```bash
-pip install moove==1.0.0
+pip install moove==1.0.3
 ```
 
 After installing, a default configuration file (moove_config.ini) will be available at ~/.moove/. This configuration file should be adjusted to fit your experiment setup.
