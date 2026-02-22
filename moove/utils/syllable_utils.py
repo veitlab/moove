@@ -90,10 +90,25 @@ def edit_syllable(event, app_state):
     import os
 
     display_dict = app_state.display_dict
-    if app_state.edit_type == "None" or app_state.selected_syllable_index is None:
+    if app_state.edit_type == "None":
         return
 
-    if (event.key.isalpha() and event.key.islower()) or event.key.isdigit():
+    num_labels = len(display_dict["labels"]) if display_dict else 0
+
+    if event.key in ('left', 'right') and num_labels > 0:
+        if app_state.selected_syllable_index is None:
+            new_idx = 0 if event.key == 'right' else num_labels - 1
+        elif event.key == 'left':
+            new_idx = (app_state.selected_syllable_index - 1) % num_labels
+        else:
+            new_idx = (app_state.selected_syllable_index + 1) % num_labels
+        highlight_syllable(new_idx, app_state)
+        return
+
+    if app_state.selected_syllable_index is None or num_labels == 0:
+        return
+
+    if len(event.key) == 1 and ((event.key.isalpha() and event.key.islower()) or event.key.isdigit()):
         labels = list(display_dict["labels"])
         labels[app_state.selected_syllable_index] = event.key
         display_dict["labels"] = ''.join(labels)
@@ -103,11 +118,8 @@ def edit_syllable(event, app_state):
             display_dict
         )
         update_ax2(app_state.ax2, display_dict, app_state)
-        # automatically highlight next syllable
-        len_labels = len(display_dict['labels'])
-        next_idx = (app_state.selected_syllable_index + 1) % len(display_dict["labels"])
-        if next_idx <= len_labels:
-            highlight_syllable(next_idx, app_state)
+        next_idx = (app_state.selected_syllable_index + 1) % num_labels
+        highlight_syllable(next_idx, app_state)
 
 
 def delete_segment(event, app_state):
@@ -237,6 +249,13 @@ def handle_keypress(event, app_state, v):
     if event.key == 'escape':
         edit_type = "None"
         v.set("1")
+        if app_state.selected_syllable_index is not None:
+            app_state.ax2.texts[app_state.selected_syllable_index].set_color('black')
+            app_state.selected_syllable_index = None
+            app_state.canvas.restore_region(app_state.ax2_background)
+            for text in app_state.ax2.texts:
+                app_state.ax2.draw_artist(text)
+            app_state.canvas.blit(app_state.ax2.bbox)
     elif edit_type != "Label Interactive":
         if event.key == 'm':
             edit_type = "Move Segment"

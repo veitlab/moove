@@ -280,6 +280,10 @@ def on_edit_type_selected(value):
         canvas.get_tk_widget().configure(cursor="tcross")
     elif value == "None":
         canvas.get_tk_widget().configure(cursor="tcross")
+        if app_state.selected_syllable_index is not None and app_state.ax2.texts:
+            app_state.ax2.texts[app_state.selected_syllable_index].set_color('black')
+            app_state.selected_syllable_index = None
+            canvas.draw_idle()
     else:
         canvas.get_tk_widget().configure(cursor="")
 

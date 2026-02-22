@@ -55,7 +55,8 @@ def save_notmat(filename, notmat_dict):
     }
 
     # Convert header into bytes
-    save_dict['__header__'] = np.compat.asbytes(save_dict['__header__'])
+    header = save_dict['__header__']
+    save_dict['__header__'] = header.encode('latin-1') if isinstance(header, str) else header
 
     # Save file as .mat file
     savemat(filename, save_dict, do_compression=True)
