@@ -26,6 +26,7 @@ class AppState:
         self.display_dict = None
         self.edit_type = None
         self.moved_point = None 
+        self.new_onset = None
         self.selected_syllable_index = None  
         self.edit_type = "None"
         self.data_dir = ""
