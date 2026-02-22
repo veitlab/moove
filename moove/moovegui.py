@@ -34,9 +34,10 @@ from moove.models.CNN import CNN
 # Global config imports
 from moove.app_state import AppState  # App state management
 
-# Avoid key binding conflicts
-mpl.rcParams['keymap.yscale'] = ''
-mpl.rcParams['keymap.xscale'] = ''
+# Disable all default matplotlib key bindings to avoid conflicts with labeling
+for key in list(mpl.rcParams):
+    if key.startswith('keymap.'):
+        mpl.rcParams[key] = []
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -470,8 +471,7 @@ canvas = FigureCanvasTkAgg(fig, master=plot_frame)
 app_state.set_axes(ax1, ax2, ax3)
 app_state.set_canvas(canvas)
 app_state.display_dict = get_display_data(file_path, app_state.config)
-# save background of axis 2 and 3 to restore 
-app_state.ax2_background = app_state.canvas.copy_from_bbox(app_state.ax2.bbox)
+# ax3 background saved for marker highlighting
 app_state.ax3_background = app_state.canvas.copy_from_bbox(app_state.ax3.bbox)
 
 canvas_widget = canvas.get_tk_widget()

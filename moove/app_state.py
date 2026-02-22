@@ -219,6 +219,22 @@ class AppState:
     def draw_canvas(self):
         if self.canvas:
             self.canvas.draw()
+            self._update_ax2_background()
+
+    def _update_ax2_background(self):
+        """Recapture ax2 background without text for consistent blitting."""
+        if not self.ax2 or not self.canvas:
+            return
+        renderer = self.canvas.get_renderer()
+        texts = self.ax2.texts[:]
+        for t in texts:
+            t.set_visible(False)
+        self.ax2.draw(renderer)
+        self.ax2_background = self.canvas.copy_from_bbox(self.ax2.bbox)
+        for t in texts:
+            t.set_visible(True)
+        self.ax2.draw(renderer)
+        self.canvas.blit(self.ax2.bbox)
 
     def redraw_spectrogram(self, vmin, vmax):
         if self.spec:
