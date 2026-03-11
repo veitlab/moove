@@ -599,6 +599,7 @@ def stream_callback(indata, outdata, frames, time_info, status):
         if smoothed_db > bout_threshold_db:
             bout_index2wait = int(seconds_to_index(t_after, chunk_size, frame_rate))
 
+        # Part where the file gets saved
         if bout_index2wait == 0:
             bout_data_to_save = raw_audio_chunks.copy()
             bout_indexes_waited_copy = bout_indexes_waited
@@ -682,11 +683,19 @@ def stream_callback(indata, outdata, frames, time_info, status):
                         len_offset = len(offsets)
                         len_ypred = len(pred_syl_list)
                         if last_duration < (min_syllable_length * 1000):
+                            # Remove the last onset, offset, and corresponding pred_syl_list entry
                             onsets.pop()
                             offsets.pop()
+                            # syllable list equals offset number
                             if len_ypred == len_offset:
                                 pred_syl_list.pop()
                                 pred_syl_list_for_playback.pop()
+                            # syllable list contains one entry less than offsets (missing syl)
+                            elif len_ypred == (len_offset - 1):
+                                missing_y_pred_flag = True
+                                logger.debug("Missing Y_PRED_FLAG set to True")
+                            else:
+                                logger.error("Mismatch in lengths!")
                         
                         # Reset flags for new onset and offset
                         onset_flag = False
@@ -736,9 +745,11 @@ def stream_callback(indata, outdata, frames, time_info, status):
                             # Remove the last onset, offset, and corresponding pred_syl_list entry
                             onsets.pop()
                             offsets.pop()
+                            # syllable list equals offset number
                             if len_ypred == len_offset:
                                 pred_syl_list.pop()
                                 pred_syl_list_for_playback.pop()
+                            # syllable list contains one entry less than offsets (missing syl)
                             elif len_ypred == (len_offset - 1):
                                 missing_y_pred_flag = True
                                 logger.debug("Missing Y_PRED_FLAG set to True")
@@ -845,9 +856,11 @@ def stream_callback(indata, outdata, frames, time_info, status):
                                 # Remove the last onset, offset, and corresponding pred_syl_list entry
                                 onsets.pop()
                                 offsets.pop()
+                                # syllable list equals offset number
                                 if len_ypred == len_offset:
                                     pred_syl_list.pop()
                                     pred_syl_list_for_playback.pop()
+                                # syllable list contains one entry less than offsets (missing syl)
                                 elif len_ypred == (len_offset - 1):
                                     missing_y_pred_flag = True
                                     logger.debug("Missing Y_PRED_FLAG set to True")
